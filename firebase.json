@@ -7,6 +7,8 @@
       "sample-products.json",
       "duplicate-cleanup.json",
       ".firebaserc",
+      ".git",
+      ".git/**",
       "README.md",
       "**/.*",
       "**/node_modules/**"

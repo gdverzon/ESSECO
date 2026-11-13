@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
 import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js";
 import { getDatabase, ref, push, update, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUViNQKHmW6-JcSwKY4R_DXvB2SHpS_K0",
@@ -16,6 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 isSupported().then(supported => supported && getAnalytics(app)).catch(() => {});
 const db = getDatabase(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const OWNER_EMAIL = "gd.verzon@gmail.com";
 const productsRef = ref(db, "inventory/products");
 const activityRef = ref(db, "inventory/activity");
 
@@ -23,6 +27,8 @@ const $ = id => document.getElementById(id);
 const state = { products: {}, activity: {}, search: "", category: "all", stock: "all" };
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 const dateTime = new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short" });
+let unsubscribeProducts = null;
+let unsubscribeActivity = null;
 
 function stockStatus(product) {
   const stock = Number(product.stock) || 0;
@@ -123,9 +129,30 @@ $("stockForm").addEventListener("submit", async event => {
   } catch (error) { toast(`Could not update stock: ${error.message}`, true); }
 });
 
-onValue(productsRef, snapshot => { state.products = snapshot.val() || {}; renderProducts(); setConnection("online", "Synced in real time"); }, error => setConnection("error", error.message));
-onValue(query(activityRef, limitToLast(100)), snapshot => { state.activity = snapshot.val() || {}; renderActivity(); });
 function setConnection(status, label) { document.querySelector(".status-dot").className = `status-dot ${status}`; $("syncStatus").textContent = label; }
+
+function stopDataListeners() {
+  if (unsubscribeProducts) unsubscribeProducts(); if (unsubscribeActivity) unsubscribeActivity();
+  unsubscribeProducts = null; unsubscribeActivity = null; state.products = {}; state.activity = {};
+}
+
+function startDataListeners() {
+  stopDataListeners();
+  unsubscribeProducts = onValue(productsRef, snapshot => { state.products = snapshot.val() || {}; renderProducts(); setConnection("online", "Synced securely"); }, error => setConnection("error", error.message));
+  unsubscribeActivity = onValue(query(activityRef, limitToLast(100)), snapshot => { state.activity = snapshot.val() || {}; renderActivity(); }, error => setConnection("error", error.message));
+}
+
+$("signInButton").addEventListener("click", async () => {
+  $("authMessage").textContent = "Opening secure sign-in…";
+  try { await signInWithPopup(auth, provider); } catch (error) { $("authMessage").textContent = error.code === "auth/operation-not-allowed" ? "Google sign-in must be enabled in Firebase Authentication." : error.message; }
+});
+$("signOutButton").addEventListener("click", () => signOut(auth));
+onAuthStateChanged(auth, async user => {
+  const authorized = user?.email?.toLowerCase() === OWNER_EMAIL && user.emailVerified;
+  if (user && !authorized) { await signOut(auth); $("authMessage").textContent = "This Google account is not authorized."; return; }
+  $("authScreen").hidden = authorized;
+  if (authorized) startDataListeners(); else { stopDataListeners(); setConnection("", "Sign-in required"); }
+});
 
 $("searchInput").addEventListener("input", e => { state.search = e.target.value.trim().toLowerCase(); renderProducts(); });
 $("categoryFilter").addEventListener("change", e => { state.category = e.target.value; renderProducts(); });
