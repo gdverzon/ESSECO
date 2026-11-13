@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ESSECO stock inventory management dashboard">
+  <meta name="theme-color" content="#12372a">
+  <title>ESSECO Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">E</span><div><strong>ESSECO</strong><small>Inventory system</small></div></div>
+      <nav aria-label="Primary navigation">
+        <button class="nav-item active" data-view="inventory"><span>▦</span> Inventory</button>
+        <button class="nav-item" data-view="activity"><span>↻</span> Activity</button>
+      </nav>
+      <div class="sidebar-note"><span class="status-dot"></span><div><strong>Live database</strong><small id="syncStatus">Connecting…</small></div></div>
+      <p class="sidebar-footer">Stock clarity, every day.</p>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menuButton" aria-label="Open menu">☰</button>
+        <div><p class="eyebrow" id="todayLabel"></p><h1 id="pageTitle">Inventory overview</h1></div>
+        <button class="primary-button" id="addProductButton"><span>＋</span> Add product</button>
+      </header>
+
+      <section id="inventoryView">
+        <div class="stats-grid">
+          <article class="stat-card accent-green"><div class="stat-icon">▦</div><div><p>Total products</p><strong id="totalProducts">0</strong><small>Active SKUs</small></div></article>
+          <article class="stat-card accent-blue"><div class="stat-icon">₱</div><div><p>Inventory value</p><strong id="inventoryValue">₱0.00</strong><small>At unit cost</small></div></article>
+          <article class="stat-card accent-amber"><div class="stat-icon">!</div><div><p>Low stock</p><strong id="lowStockCount">0</strong><small>Needs attention</small></div></article>
+          <article class="stat-card accent-red"><div class="stat-icon">×</div><div><p>Out of stock</p><strong id="outOfStockCount">0</strong><small>Unavailable items</small></div></article>
+        </div>
+
+        <section class="panel inventory-panel">
+          <div class="panel-header">
+            <div><h2>Product inventory</h2><p><span id="resultCount">0</span> products in your catalog</p></div>
+            <div class="toolbar">
+              <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search name, SKU…" aria-label="Search products"></label>
+              <select id="categoryFilter" aria-label="Filter by category"><option value="all">All categories</option></select>
+              <select id="stockFilter" aria-label="Filter by stock status"><option value="all">All stock</option><option value="healthy">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Unit cost</th><th>Stock</th><th>Status</th><th class="align-right">Actions</th></tr></thead>
+              <tbody id="productRows"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState" hidden><div>▦</div><h3>No products found</h3><p>Add your first product or adjust the current filters.</p><button class="primary-button" id="emptyAddButton">Add product</button></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="activityView" hidden>
+        <section class="panel activity-panel"><div class="panel-header"><div><h2>Stock activity</h2><p>A live audit trail of inventory changes</p></div></div><div id="activityList" class="activity-list"></div></section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="productModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <div class="modal-header"><div><p class="eyebrow">Catalog item</p><h2 id="productModalTitle">Add product</h2></div><button class="icon-button close-modal" aria-label="Close">×</button></div>
+      <form id="productForm">
+        <input type="hidden" id="productId">
+        <div class="form-grid">
+          <label class="full">Product name<input id="productName" required maxlength="80" placeholder="e.g. Premium Arabica Beans"></label>
+          <label>SKU<input id="productSku" required maxlength="30" placeholder="e.g. ES-COF-001"></label>
+          <label>Category<input id="productCategory" required maxlength="40" placeholder="e.g. Beverage"></label>
+          <label>Unit cost (₱)<input id="productPrice" required type="number" min="0" step="0.01" placeholder="0.00"></label>
+          <label>Current stock<input id="productStock" required type="number" min="0" step="1" placeholder="0"></label>
+          <label>Low-stock level<input id="productThreshold" required type="number" min="0" step="1" value="5"></label>
+          <label>Unit<input id="productUnit" required maxlength="20" value="pcs" placeholder="pcs, boxes, kg"></label>
+          <label class="full">Notes<textarea id="productNotes" maxlength="300" rows="3" placeholder="Optional product details"></textarea></label>
+        </div>
+        <div class="modal-actions"><button type="button" class="secondary-button close-modal">Cancel</button><button type="submit" class="primary-button" id="saveProductButton">Save product</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="stockModal" hidden>
+    <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="stockModalTitle">
+      <div class="modal-header"><div><p class="eyebrow">Stock adjustment</p><h2 id="stockModalTitle">Update stock</h2><p id="stockProductName"></p></div><button class="icon-button close-stock-modal" aria-label="Close">×</button></div>
+      <form id="stockForm"><input type="hidden" id="stockProductId"><div class="type-toggle"><label><input type="radio" name="stockType" value="in" checked><span>＋ Stock in</span></label><label><input type="radio" name="stockType" value="out"><span>− Stock out</span></label></div><label>Quantity<input id="stockQuantity" type="number" min="1" step="1" required value="1"></label><label>Reason<input id="stockReason" maxlength="100" placeholder="e.g. Supplier delivery"></label><div class="modal-actions"><button type="button" class="secondary-button close-stock-modal">Cancel</button><button type="submit" class="primary-button">Apply adjustment</button></div></form>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

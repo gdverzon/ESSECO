@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "inventory": {
+      ".read": true,
+      ".write": true,
+      "products": {
+        "$productId": {
+          ".validate": "!data.exists() || (data.hasChildren(['name','sku','category','price','stock','threshold','unit']) && data.child('name').isString() && data.child('name').val().length <= 80 && data.child('sku').isString() && data.child('price').isNumber() && data.child('price').val() >= 0 && data.child('stock').isNumber() && data.child('stock').val() >= 0 && data.child('threshold').isNumber() && data.child('threshold').val() >= 0)"
+        }
+      },
+      "activity": {
+        "$activityId": {
+          ".validate": "!data.exists() || (data.hasChildren(['type','title','timestamp']) && data.child('type').isString() && data.child('title').isString() && data.child('timestamp').isNumber())"
+        }
+      }
+    }
+  }
+}
