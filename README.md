@@ -64,3 +64,14 @@ Before the workflow can send email:
 5. Push the workflow to `main`, then run **Check stock alerts** manually from the GitHub Actions tab for the first test.
 
 The monitor stores product status under `system/stockAlertStatuses` in Realtime Database so repeated runs do not resend the same alert. This approach does not require the Firebase Blaze plan. The Gmail app password must never be committed to this repository.
+
+# Android APK from GitHub Actions
+
+GitHub Actions automatically builds a debug APK when Android project files are pushed to `main`. You can also start a build manually:
+
+1. Open the repository's **Actions** tab.
+2. Select **Build Android APK**.
+3. Select **Run workflow**.
+4. When the build finishes, open the run and download the APK from **Artifacts**.
+
+The downloaded ZIP contains `app-debug.apk`. Extract it, transfer the APK to your Android phone, allow installation from that source when prompted, and install it. GitHub retains each APK artifact for 30 days.
