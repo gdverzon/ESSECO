@@ -34,6 +34,13 @@
       ".github/**",
       ".firebase",
       ".firebase/**",
+      ".gradle",
+      ".gradle/**",
+      "functions",
+      "functions/**",
+      "notifications",
+      "notifications/**",
+      "firebase-debug.log",
       ".gitignore",
       "README.md",
       "**/node_modules/**"
