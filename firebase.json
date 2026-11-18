@@ -4,13 +4,38 @@
     "ignore": [
       "firebase.json",
       "database.rules.json",
+      "android-app",
+      "android-app/**",
+      "app",
+      "app/**",
+      "gradle",
+      "gradle/**",
+      "build",
+      "build/**",
+      "build.gradle",
+      "gradle.properties",
+      "gradlew",
+      "gradlew.bat",
+      "settings.gradle",
+      "twa-manifest.json",
+      "manifest-checksum.txt",
+      "store_icon.png",
+      "*.apk",
+      "*.aab",
+      "*.keystore",
+      "*.idsig",
+      "hs_err_pid*.log",
       "sample-products.json",
       "duplicate-cleanup.json",
       ".firebaserc",
       ".git",
       ".git/**",
+      ".github",
+      ".github/**",
+      ".firebase",
+      ".firebase/**",
+      ".gitignore",
       "README.md",
-      "**/.*",
       "**/node_modules/**"
     ],
     "headers": [
@@ -21,6 +46,17 @@
       {
         "source": "**/*.css",
         "headers": [{ "key": "Cache-Control", "value": "public,max-age=3600" }]
+      },
+      {
+        "source": "service-worker.js",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      },
+      {
+        "source": ".well-known/assetlinks.json",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
       }
     ],
     "rewrites": [

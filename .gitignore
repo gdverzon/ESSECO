@@ -67,3 +67,13 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Android build output and private signing material
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+*.apk.idsig
+*.keystore
+hs_err_pid*.log

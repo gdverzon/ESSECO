@@ -1,0 +1,12 @@
+{
+  "name": "esseco-stock-notifications",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "nodemailer": "^10.6.0"
+  }
+}

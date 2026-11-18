@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.esseco.inventory",
+      "sha256_cert_fingerprints": [
+        "44:9F:99:46:23:D7:53:2D:80:97:AE:26:DF:B8:C7:E6:13:4A:52:EC:90:C6:50:A1:08:39:87:26:50:E8:6C:7E"
+      ]
+    }
+  }
+]
