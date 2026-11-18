@@ -29,32 +29,50 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function createDigest(alerts) {
+function createDigest(alerts, products = {}) {
   const outCount = alerts.filter(alert => alert.status === "out").length;
   const lowCount = alerts.length - outCount;
-  const summary = [
+  const alertSummary = [
     outCount ? `${outCount} out of stock` : "",
     lowCount ? `${lowCount} low stock` : ""
   ].filter(Boolean).join(", ");
 
-  const textRows = alerts.map(({ product, status }) =>
-    `${status === "out" ? "OUT OF STOCK" : "LOW STOCK"}: ${product.name} (${product.sku}) — ${product.stock} ${product.unit || "units"}, threshold ${product.threshold}`
+  const inventory = Object.entries(products).map(([id, product]) => ({
+    id,
+    product,
+    status: stockStatus(product)
+  })).sort((a, b) => {
+    const priority = { out: 0, low: 1, healthy: 2, missing: 3 };
+    return priority[a.status] - priority[b.status]
+      || String(a.product?.name || "").localeCompare(String(b.product?.name || ""));
+  });
+  const statusCounts = inventory.reduce((counts, item) => {
+    counts[item.status] = (counts[item.status] || 0) + 1;
+    return counts;
+  }, {});
+  const inventorySummary = `${statusCounts.out || 0} out of stock, ${statusCounts.low || 0} low stock, ${statusCounts.healthy || 0} healthy`;
+  const labels = { out: "OUT OF STOCK", low: "LOW STOCK", healthy: "HEALTHY", missing: "MISSING" };
+  const colors = { out: "#b42318", low: "#b54708", healthy: "#157347", missing: "#667085" };
+
+  const textRows = inventory.map(({ product, status }) =>
+    `${labels[status]}: ${product?.name || "Unnamed product"} (${product?.sku || "No SKU"}) - ${Number(product?.stock) || 0} ${product?.unit || "units"}, threshold ${Number(product?.threshold) || 0}`
   );
-  const htmlRows = alerts.map(({ product, status }) => `
+  const htmlRows = inventory.map(({ product, status }) => `
     <tr>
-      <td style="padding:9px;border-bottom:1px solid #ddd;color:${status === "out" ? "#b42318" : "#b54708"};font-weight:bold">${status === "out" ? "OUT" : "LOW"}</td>
-      <td style="padding:9px;border-bottom:1px solid #ddd"><strong>${escapeHtml(product.name)}</strong><br><small>${escapeHtml(product.sku)}</small></td>
-      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product.stock) || 0} ${escapeHtml(product.unit || "units")}</td>
-      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product.threshold) || 0}</td>
+      <td style="padding:9px;border-bottom:1px solid #ddd;color:${colors[status]};font-weight:bold">${labels[status]}</td>
+      <td style="padding:9px;border-bottom:1px solid #ddd"><strong>${escapeHtml(product?.name || "Unnamed product")}</strong><br><small>${escapeHtml(product?.sku || "No SKU")}</small></td>
+      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.stock) || 0} ${escapeHtml(product?.unit || "units")}</td>
+      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.threshold) || 0}</td>
     </tr>`).join("");
 
   return {
-    subject: `[ESSECO] Stock alert: ${summary}`,
-    text: `${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
+    subject: `[ESSECO] Stock alert: ${alertSummary}`,
+    text: `New alerts: ${alertSummary}\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
     html: `
       <div style="font-family:Arial,sans-serif;color:#17231d;max-width:640px">
         <h2>ESSECO stock alert</h2>
-        <p>${escapeHtml(summary)} requires attention.</p>
+        <p><strong>${escapeHtml(alertSummary)}</strong> requires attention.</p>
+        <p>Current inventory: ${escapeHtml(inventorySummary)}.</p>
         <table style="border-collapse:collapse;width:100%">
           <thead><tr><th>Status</th><th>Product</th><th>Stock</th><th>Threshold</th></tr></thead>
           <tbody>${htmlRows}</tbody>

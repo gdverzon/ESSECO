@@ -31,7 +31,7 @@ async function run() {
     await transporter.sendMail({
       from: `ESSECO Inventory <${notificationEmail}>`,
       to: notificationEmail,
-      ...createDigest(alerts)
+      ...createDigest(alerts, products)
     });
     console.log(`Sent ${alerts.length} stock alert(s) to ${notificationEmail}.`);
   } else {

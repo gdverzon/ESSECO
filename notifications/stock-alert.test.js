@@ -18,11 +18,19 @@ test("finds only new alert states", () => {
   assert.deepEqual(buildCurrentStatuses(products), { healthy: "healthy", low: "low", out: "out" });
 });
 
-test("creates one escaped digest for multiple products", () => {
-  const digest = createDigest([
+test("creates one escaped digest with every product status", () => {
+  const alerts = [
     { status: "low", product: { name: "Beans <Premium>", sku: "COF-01", stock: 2, threshold: 5, unit: "bags" } },
     { status: "out", product: { name: "Tea", sku: "TEA-01", stock: 0, threshold: 3, unit: "boxes" } }
-  ]);
+  ];
+  const digest = createDigest(alerts, {
+    beans: alerts[0].product,
+    tea: alerts[1].product,
+    rice: { name: "Rice", sku: "RICE-01", stock: 10, threshold: 4, unit: "bags" }
+  });
   assert.match(digest.subject, /1 out of stock, 1 low stock/);
   assert.match(digest.html, /Beans &lt;Premium&gt;/);
+  assert.match(digest.html, /HEALTHY/);
+  assert.match(digest.html, /Rice/);
+  assert.match(digest.text, /1 healthy/);
 });
