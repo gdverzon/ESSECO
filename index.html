@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=5">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("esseco-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
   <section class="auth-screen" id="authScreen">
@@ -28,8 +29,11 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand"><span class="brand-mark">E</span><div><strong>ESSECO</strong><small>Inventory system</small></div></div>
       <nav aria-label="Primary navigation">
-        <button class="nav-item active" data-view="inventory"><span>▦</span> Inventory</button>
+        <button class="nav-item active" data-view="inventory" data-inventory="products"><span>▦</span> Product inventory</button>
+        <button class="nav-item" data-view="inventory" data-inventory="raw"><span>▧</span> Raw materials</button>
+        <button class="nav-item" data-view="inventory" data-inventory="packaging"><span>□</span> Packaging inventory</button>
         <button class="nav-item" data-view="activity"><span>↻</span> Activity</button>
+        <button class="nav-item" data-view="notifications"><span>✉</span> Notifications</button>
       </nav>
       <div class="sidebar-note"><span class="status-dot"></span><div><strong>Live database</strong><small id="syncStatus">Connecting…</small></div></div>
       <p class="sidebar-footer">Stock clarity, every day.</p>
@@ -39,12 +43,12 @@
       <header class="topbar">
         <button class="icon-button menu-button" id="menuButton" aria-label="Open menu">☰</button>
         <div><p class="eyebrow" id="todayLabel"></p><h1 id="pageTitle">Inventory overview</h1></div>
-        <div class="topbar-actions"><button class="secondary-button" id="signOutButton">Sign out</button><button class="primary-button" id="addProductButton"><span>＋</span> Add product</button></div>
+        <div class="topbar-actions"><button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><span aria-hidden="true">☾</span></button><button class="secondary-button" id="signOutButton">Sign out</button><button class="primary-button" id="addProductButton"><span>＋</span> Add product</button></div>
       </header>
 
       <section id="inventoryView">
         <div class="stats-grid">
-          <article class="stat-card accent-green"><div class="stat-icon">▦</div><div><p>Total products</p><strong id="totalProducts">0</strong><small>Active SKUs</small></div></article>
+          <article class="stat-card accent-green"><div class="stat-icon">▦</div><div><p id="totalItemsLabel">Total products</p><strong id="totalProducts">0</strong><small id="totalItemsHint">Active SKUs</small></div></article>
           <article class="stat-card accent-blue"><div class="stat-icon">₱</div><div><p>Inventory value</p><strong id="inventoryValue">₱0.00</strong><small>At unit cost</small></div></article>
           <article class="stat-card accent-amber"><div class="stat-icon">!</div><div><p>Low stock</p><strong id="lowStockCount">0</strong><small>Needs attention</small></div></article>
           <article class="stat-card accent-red"><div class="stat-icon">×</div><div><p>Out of stock</p><strong id="outOfStockCount">0</strong><small>Unavailable items</small></div></article>
@@ -52,19 +56,20 @@
 
         <section class="panel inventory-panel">
           <div class="panel-header">
-            <div><h2>Product inventory</h2><p><span id="resultCount">0</span> products in your catalog</p></div>
+            <div><h2 id="inventoryHeading">Product inventory</h2><p><span id="resultCount">0</span> <span id="inventoryCountLabel">products in your catalog</span></p></div>
             <div class="toolbar">
               <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search name, SKU…" aria-label="Search products"></label>
               <select id="categoryFilter" aria-label="Filter by category"><option value="all">All categories</option></select>
               <select id="stockFilter" aria-label="Filter by stock status"><option value="all">All stock</option><option value="healthy">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
             </div>
           </div>
+          <div class="bulk-bar" id="bulkBar" hidden><strong><span id="selectedCount">0</span> selected</strong><div class="bulk-actions"><button class="secondary-button" id="bulkEditButton" type="button">Edit fields</button><button class="secondary-button" id="bulkAdjustButton" type="button">Adjust stock</button><button class="secondary-button danger-button" id="bulkDeleteButton" type="button">Delete</button></div></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Unit cost</th><th>Stock</th><th>Status</th><th class="align-right">Actions</th></tr></thead>
+              <thead><tr><th class="select-cell"><input type="checkbox" id="selectAll" aria-label="Select all visible items"></th><th id="itemColumnHeading">Product</th><th>SKU</th><th>Category</th><th>Unit cost</th><th>Stock</th><th>Status</th><th class="align-right">Actions</th></tr></thead>
               <tbody id="productRows"></tbody>
             </table>
-            <div class="empty-state" id="emptyState" hidden><div>▦</div><h3>No products found</h3><p>Add your first product or adjust the current filters.</p><button class="primary-button" id="emptyAddButton">Add product</button></div>
+            <div class="empty-state" id="emptyState" hidden><div>▦</div><h3 id="emptyTitle">No products found</h3><p id="emptyMessage">Add your first product or adjust the current filters.</p><button class="primary-button" id="emptyAddButton">Add product</button></div>
           </div>
         </section>
       </section>
@@ -72,18 +77,26 @@
       <section id="activityView" hidden>
         <section class="panel activity-panel"><div class="panel-header"><div><h2>Stock activity</h2><p>A live audit trail of inventory changes</p></div></div><div id="activityList" class="activity-list"></div></section>
       </section>
+
+      <section id="notificationsView" hidden>
+        <section class="panel settings-panel">
+          <div class="panel-header"><div><h2>Email notification recipients</h2><p>Low-stock and out-of-stock alerts are sent to every address below.</p></div></div>
+          <form id="recipientForm" class="recipient-form"><label>Email address<span class="recipient-input-row"><input id="recipientEmail" type="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"><button class="primary-button" type="submit">Add recipient</button></span></label></form>
+          <div class="table-wrap recipient-table-wrap"><table class="recipient-table"><thead><tr><th>Email address</th><th>Role</th><th class="align-right">Actions</th></tr></thead><tbody id="recipientList"></tbody></table></div>
+        </section>
+      </section>
     </main>
   </div>
 
   <div class="modal-backdrop" id="productModal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
-      <div class="modal-header"><div><p class="eyebrow">Catalog item</p><h2 id="productModalTitle">Add product</h2></div><button class="icon-button close-modal" aria-label="Close">×</button></div>
+      <div class="modal-header"><div><p class="eyebrow" id="itemModalEyebrow">Catalog item</p><h2 id="productModalTitle">Add product</h2></div><button class="icon-button close-modal" aria-label="Close">×</button></div>
       <form id="productForm">
         <input type="hidden" id="productId">
         <div class="form-grid">
-          <label class="full">Product name<input id="productName" required maxlength="80" placeholder="e.g. Premium Arabica Beans"></label>
+          <label class="full"><span id="itemNameLabel">Product name</span><input id="productName" required maxlength="80" placeholder="e.g. Premium Arabica Beans"></label>
           <label>SKU<input id="productSku" required maxlength="30" placeholder="e.g. ES-COF-001"></label>
-          <label>Category<input id="productCategory" required maxlength="40" placeholder="e.g. Beverage"></label>
+          <label>Category<span class="category-input-row"><select id="productCategory" required><option value="">Select a category</option></select><button class="secondary-button add-category-button" id="addCategoryButton" type="button">Add category</button></span></label>
           <label>Unit cost (₱)<input id="productPrice" required type="number" min="0" step="0.01" placeholder="0.00"></label>
           <label>Current stock<input id="productStock" required type="number" min="0" step="1" placeholder="0"></label>
           <label>Low-stock level<input id="productThreshold" required type="number" min="0" step="1" value="5"></label>
@@ -99,6 +112,26 @@
     <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="stockModalTitle">
       <div class="modal-header"><div><p class="eyebrow">Stock adjustment</p><h2 id="stockModalTitle">Update stock</h2><p id="stockProductName"></p></div><button class="icon-button close-stock-modal" aria-label="Close">×</button></div>
       <form id="stockForm"><input type="hidden" id="stockProductId"><div class="type-toggle"><label><input type="radio" name="stockType" value="in" checked><span>＋ Stock in</span></label><label><input type="radio" name="stockType" value="out"><span>− Stock out</span></label></div><label>Quantity<input id="stockQuantity" type="number" min="1" step="1" required value="1"></label><label>Reason<input id="stockReason" maxlength="100" placeholder="e.g. Supplier delivery"></label><div class="modal-actions"><button type="button" class="secondary-button close-stock-modal">Cancel</button><button type="submit" class="primary-button">Apply adjustment</button></div></form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="bulkModal" hidden>
+    <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="bulkModalTitle">
+      <div class="modal-header"><div><p class="eyebrow">Bulk action</p><h2 id="bulkModalTitle">Edit selected items</h2><p id="bulkModalDescription"></p></div><button class="icon-button close-bulk-modal" aria-label="Close">×</button></div>
+      <form id="bulkForm">
+        <input type="hidden" id="bulkMode">
+        <div id="bulkEditFields">
+          <label>Category (leave blank to keep current)<input id="bulkCategory" maxlength="40" placeholder="Set one category for all"></label>
+          <label>Low-stock level (leave blank to keep current)<input id="bulkThreshold" type="number" min="0" step="1" placeholder="No change"></label>
+          <label>Unit (leave blank to keep current)<input id="bulkUnit" maxlength="20" placeholder="e.g. pcs, kg, rolls"></label>
+        </div>
+        <div id="bulkAdjustFields" hidden>
+          <div class="type-toggle"><label><input type="radio" name="bulkStockType" value="in" checked><span>＋ Stock in</span></label><label><input type="radio" name="bulkStockType" value="out"><span>− Stock out</span></label></div>
+          <label>Quantity per item<input id="bulkQuantity" type="number" min="1" step="1" value="1"></label>
+          <label>Reason<input id="bulkReason" maxlength="100" placeholder="e.g. Stock count correction"></label>
+        </div>
+        <div class="modal-actions"><button type="button" class="secondary-button close-bulk-modal">Cancel</button><button type="submit" class="primary-button" id="applyBulkButton">Apply changes</button></div>
+      </form>
     </div>
   </div>
 

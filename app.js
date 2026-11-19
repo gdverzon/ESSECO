@@ -1,165 +1,110 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
 import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js";
-import { getDatabase, ref, push, update, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
+import { getDatabase, ref, push, update, onValue } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCUViNQKHmW6-JcSwKY4R_DXvB2SHpS_K0",
-  authDomain: "esseco-ea869.firebaseapp.com",
-  databaseURL: "https://esseco-ea869-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "esseco-ea869",
-  storageBucket: "esseco-ea869.firebasestorage.app",
-  messagingSenderId: "512168896477",
-  appId: "1:512168896477:web:33d3b51e522caa86fbb834",
-  measurementId: "G-GKJKE01BFC"
-};
-
+const firebaseConfig = { apiKey: "AIzaSyCUViNQKHmW6-JcSwKY4R_DXvB2SHpS_K0", authDomain: "esseco-ea869.firebaseapp.com", databaseURL: "https://esseco-ea869-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "esseco-ea869", storageBucket: "esseco-ea869.firebasestorage.app", messagingSenderId: "512168896477", appId: "1:512168896477:web:33d3b51e522caa86fbb834", measurementId: "G-GKJKE01BFC" };
 const app = initializeApp(firebaseConfig);
 isSupported().then(supported => supported && getAnalytics(app)).catch(() => {});
-const db = getDatabase(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-const OWNER_EMAIL = "gd.verzon@gmail.com";
-const productsRef = ref(db, "inventory/products");
-const activityRef = ref(db, "inventory/activity");
-
-const $ = id => document.getElementById(id);
-const state = { products: {}, activity: {}, search: "", category: "all", stock: "all" };
+const db = getDatabase(app), auth = getAuth(app), provider = new GoogleAuthProvider();
+const OWNER_EMAIL = "gd.verzon@gmail.com", activityRef = ref(db, "inventory/activity"), $ = id => document.getElementById(id);
+const state = { items: {}, categories: {}, activity: {}, recipients: {}, inventory: "products", search: "", category: "all", stock: "all", selected: new Set() };
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 const dateTime = new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short" });
-let unsubscribeProducts = null;
-let unsubscribeActivity = null;
+let unsubscribeItems = null, unsubscribeCategories = null, unsubscribeActivity = null, unsubscribeRecipients = null;
+const config = () => ({
+  products: { singular: "product", plural: "products", title: "Product inventory", hint: "Active SKUs", path: "products", eyebrow: "Catalog item", categoryPath: "products" },
+  raw: { singular: "raw material", plural: "raw materials", title: "Raw materials inventory", hint: "Ingredients and production supplies", path: "materials", eyebrow: "Raw material", categoryPath: "raw" },
+  packaging: { singular: "packaging item", plural: "packaging items", title: "Packaging inventory", hint: "Containers, labels, and packing supplies", path: "materials", eyebrow: "Packaging item", categoryPath: "packaging" }
+})[state.inventory];
+const activePath = () => `inventory/${config().path}`, activeRef = () => ref(db, activePath());
+const categoryRef = () => ref(db, `inventory/categories/${config().categoryPath}`);
 
-function stockStatus(product) {
-  const stock = Number(product.stock) || 0;
-  const threshold = Number(product.threshold) || 0;
-  if (stock <= 0) return { key: "out", label: "Out of stock" };
-  if (stock <= threshold) return { key: "low", label: "Low stock" };
-  return { key: "healthy", label: "In stock" };
+function stockStatus(item) { const stock = Number(item.stock) || 0, threshold = Number(item.threshold) || 0; return stock <= 0 ? { key: "out", label: "Out of stock" } : stock <= threshold ? { key: "low", label: "Low stock" } : { key: "healthy", label: "In stock" }; }
+function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]); }
+function inventoryEntries() { return Object.entries(state.items).filter(([, item]) => state.inventory === "products" || item.materialType === state.inventory); }
+function categoryNames() { return [...new Set([...Object.values(state.categories).map(item => item.name), ...inventoryEntries().map(([, item]) => item.category)].filter(Boolean))].sort((a, b) => a.localeCompare(b)); }
+function filteredItems() { return inventoryEntries().filter(([, item]) => { const text = `${item.name} ${item.sku} ${item.category}`.toLowerCase(); return text.includes(state.search) && (state.category === "all" || item.category === state.category) && (state.stock === "all" || stockStatus(item).key === state.stock); }).sort((a, b) => String(a[1].name).localeCompare(String(b[1].name))); }
+function renderCategories() { const categories = categoryNames(), current = state.category; $("categoryFilter").innerHTML = '<option value="all">All categories</option>' + categories.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join(""); $("categoryFilter").value = categories.includes(current) ? current : "all"; }
+function renderProductCategory(selected = "") { const categories = categoryNames(); $("productCategory").innerHTML = '<option value="">Select a category</option>' + categories.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join(""); if (selected && !categories.includes(selected)) $("productCategory").insertAdjacentHTML("beforeend", `<option value="${escapeHtml(selected)}">${escapeHtml(selected)}</option>`); $("productCategory").value = selected; }
+function renderSelection() { const visibleIds = filteredItems().map(([id]) => id), selectedVisible = visibleIds.filter(id => state.selected.has(id)).length; $("selectedCount").textContent = state.selected.size; $("bulkBar").hidden = !state.selected.size; $("selectAll").checked = !!visibleIds.length && selectedVisible === visibleIds.length; $("selectAll").indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length; }
+function renderItems() {
+  const view = config(), all = inventoryEntries().map(([, item]) => item), items = filteredItems();
+  $("totalProducts").textContent = all.length; $("inventoryValue").textContent = peso.format(all.reduce((sum, item) => sum + (+item.price || 0) * (+item.stock || 0), 0)); $("lowStockCount").textContent = all.filter(item => stockStatus(item).key === "low").length; $("outOfStockCount").textContent = all.filter(item => stockStatus(item).key === "out").length; $("resultCount").textContent = items.length;
+  $("totalItemsLabel").textContent = `Total ${view.plural}`; $("totalItemsHint").textContent = view.hint; $("inventoryHeading").textContent = view.title; $("inventoryCountLabel").textContent = `${view.plural} in your inventory`; $("itemColumnHeading").textContent = view.singular; $("emptyTitle").textContent = `No ${view.plural} found`; $("emptyMessage").textContent = `Add your first ${view.singular} or adjust the current filters.`; $("emptyAddButton").textContent = `Add ${view.singular}`;
+  $("productRows").innerHTML = items.map(([id, item]) => { const status = stockStatus(item); return `<tr><td class="select-cell"><input type="checkbox" data-select-id="${id}" aria-label="Select ${escapeHtml(item.name)}" ${state.selected.has(id) ? "checked" : ""}></td><td class="product-cell"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.notes || "No notes")}</small></td><td>${escapeHtml(item.sku)}</td><td><span class="category-pill">${escapeHtml(item.category)}</span></td><td>${peso.format(+item.price || 0)}</td><td><span class="stock-number">${+item.stock || 0}</span> ${escapeHtml(item.unit)}</td><td><span class="status ${status.key}">${status.label}</span></td><td class="align-right"><div class="actions"><button type="button" class="action-button" data-action="stock" data-id="${id}">Adjust</button><button type="button" class="action-button" data-action="edit" data-id="${id}">Edit</button><button type="button" class="action-button danger" data-action="delete" data-id="${id}">Delete</button></div></td></tr>`; }).join("");
+  $("emptyState").hidden = !!items.length; renderCategories(); renderSelection();
 }
-
-function escapeHtml(value = "") {
-  return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
-}
-
-function filteredProducts() {
-  return Object.entries(state.products).filter(([, product]) => {
-    const haystack = `${product.name} ${product.sku} ${product.category}`.toLowerCase();
-    return haystack.includes(state.search) && (state.category === "all" || product.category === state.category) && (state.stock === "all" || stockStatus(product).key === state.stock);
-  }).sort((a, b) => String(a[1].name).localeCompare(String(b[1].name)));
-}
-
-function renderProducts() {
-  const all = Object.values(state.products);
-  const products = filteredProducts();
-  $("totalProducts").textContent = all.length;
-  $("inventoryValue").textContent = peso.format(all.reduce((sum, p) => sum + (Number(p.price) || 0) * (Number(p.stock) || 0), 0));
-  $("lowStockCount").textContent = all.filter(p => stockStatus(p).key === "low").length;
-  $("outOfStockCount").textContent = all.filter(p => stockStatus(p).key === "out").length;
-  $("resultCount").textContent = products.length;
-  $("productRows").innerHTML = products.map(([id, p]) => {
-    const status = stockStatus(p);
-    return `<tr><td class="product-cell"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.notes || "No notes")}</small></td><td>${escapeHtml(p.sku)}</td><td><span class="category-pill">${escapeHtml(p.category)}</span></td><td>${peso.format(Number(p.price) || 0)}</td><td><span class="stock-number">${Number(p.stock) || 0}</span> ${escapeHtml(p.unit)}</td><td><span class="status ${status.key}">${status.label}</span></td><td class="align-right"><div class="actions"><button class="action-button" data-action="stock" data-id="${id}">Adjust</button><button class="action-button" data-action="edit" data-id="${id}">Edit</button><button class="action-button danger" data-action="delete" data-id="${id}">Delete</button></div></td></tr>`;
-  }).join("");
-  $("emptyState").hidden = products.length > 0;
-  renderCategories();
-}
-
-function renderCategories() {
-  const select = $("categoryFilter");
-  const categories = [...new Set(Object.values(state.products).map(p => p.category).filter(Boolean))].sort();
-  const current = state.category;
-  select.innerHTML = '<option value="all">All categories</option>' + categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  select.value = categories.includes(current) ? current : "all";
-}
-
-function renderActivity() {
-  const entries = Object.entries(state.activity).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-  $("activityList").innerHTML = entries.length ? entries.map(([, item]) => `<article class="activity-item"><span class="activity-symbol ${escapeHtml(item.type)}">${item.type === "in" || item.type === "add" ? "+" : item.type === "out" || item.type === "delete" ? "−" : "✎"}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail || "")}</p></div><time>${item.timestamp ? dateTime.format(new Date(item.timestamp)) : "Just now"}</time></article>`).join("") : '<div class="empty-state"><div>↻</div><h3>No activity yet</h3><p>Inventory changes will appear here.</p></div>';
-}
-
-function activityRecord(type, title, detail, timestamp) {
-  return { type, title, detail, timestamp };
-}
-
-function openProductModal(productId = "") {
-  const p = state.products[productId];
-  $("productModalTitle").textContent = p ? "Edit product" : "Add product";
-  $("productId").value = productId;
-  $("productName").value = p?.name || ""; $("productSku").value = p?.sku || ""; $("productCategory").value = p?.category || "";
-  $("productPrice").value = p?.price ?? ""; $("productStock").value = p?.stock ?? ""; $("productThreshold").value = p?.threshold ?? 5;
-  $("productUnit").value = p?.unit || "pcs"; $("productNotes").value = p?.notes || "";
-  $("productModal").hidden = false; setTimeout(() => $("productName").focus(), 50);
-}
-
+function renderActivity() { const entries = Object.entries(state.activity).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0)); $("activityList").innerHTML = entries.length ? entries.map(([, item]) => `<article class="activity-item"><span class="activity-symbol ${escapeHtml(item.type)}">${item.type === "in" || item.type === "add" ? "+" : item.type === "out" || item.type === "delete" ? "−" : "✎"}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail || "")}</p></div><time>${item.timestamp ? dateTime.format(new Date(item.timestamp)) : "Just now"}</time></article>`).join("") : '<div class="empty-state"><div>↻</div><h3>No activity yet</h3><p>Inventory changes will appear here.</p></div>'; }
+function renderRecipients() { const entries = Object.entries(state.recipients).sort((a, b) => String(a[1].email).localeCompare(String(b[1].email))); $("recipientList").innerHTML = `<tr><td><strong>${escapeHtml(OWNER_EMAIL)}</strong></td><td><span class="category-pill">Default sender</span></td><td class="align-right"><span class="recipient-protected">Required</span></td></tr>` + entries.map(([id, recipient]) => `<tr><td><strong>${escapeHtml(recipient.email)}</strong></td><td><span class="category-pill">Additional recipient</span></td><td class="align-right"><button type="button" class="action-button danger" data-recipient-id="${id}">Remove</button></td></tr>`).join(""); }
+function record(type, title, detail, timestamp) { return { type, title, detail, timestamp, inventory: state.inventory }; }
 function closeModal(id) { $(id).hidden = true; }
 function toast(message, error = false) { const el = document.createElement("div"); el.className = `toast${error ? " error" : ""}`; el.textContent = message; $("toastRegion").append(el); setTimeout(() => el.remove(), 3200); }
+function openItemModal(id = "") { const item = state.items[id], view = config(); $("productModalTitle").textContent = `${item ? "Edit" : "Add"} ${view.singular}`; $("itemModalEyebrow").textContent = view.eyebrow; $("itemNameLabel").textContent = `${view.singular[0].toUpperCase() + view.singular.slice(1)} name`; $("productName").placeholder = state.inventory === "products" ? "e.g. Premium Arabica Beans" : state.inventory === "raw" ? "e.g. Arabica coffee beans" : "e.g. Kraft stand-up pouch"; $("productId").value = id; $("productName").value = item?.name || ""; $("productSku").value = item?.sku || ""; renderProductCategory(item?.category || ""); $("productPrice").value = item?.price ?? ""; $("productStock").value = item?.stock ?? ""; $("productThreshold").value = item?.threshold ?? 5; $("productUnit").value = item?.unit || "pcs"; $("productNotes").value = item?.notes || ""; $("productModal").hidden = false; setTimeout(() => $("productName").focus(), 50); }
+function openStockModal(id) { const item = state.items[id]; $("stockProductId").value = id; $("stockProductName").textContent = `${item.name} · Current: ${item.stock} ${item.unit}`; $("stockQuantity").value = 1; $("stockReason").value = ""; $("stockModal").hidden = false; }
+function openBulkModal(mode) { $("bulkMode").value = mode; $("bulkEditFields").hidden = mode !== "edit"; $("bulkAdjustFields").hidden = mode !== "adjust"; $("bulkModalTitle").textContent = mode === "edit" ? "Edit selected items" : "Adjust selected stock"; $("bulkModalDescription").textContent = `${state.selected.size} ${state.selected.size === 1 ? "item" : "items"} selected`; $("applyBulkButton").textContent = mode === "edit" ? "Apply changes" : "Apply adjustment"; $("bulkCategory").value = $("bulkThreshold").value = $("bulkUnit").value = $("bulkReason").value = ""; $("bulkQuantity").value = 1; $("bulkModal").hidden = false; }
 
-$("productForm").addEventListener("submit", async event => {
-  event.preventDefault(); const id = $("productId").value; const existing = state.products[id];
-  const timestamp = Date.now();
-  const product = { name: $("productName").value.trim(), sku: $("productSku").value.trim().toUpperCase(), category: $("productCategory").value.trim(), price: Number($("productPrice").value), stock: Number($("productStock").value), threshold: Number($("productThreshold").value), unit: $("productUnit").value.trim(), notes: $("productNotes").value.trim(), updatedAt: timestamp };
+$("productForm").addEventListener("submit", async event => { event.preventDefault(); const id = $("productId").value, existing = state.items[id], timestamp = Date.now(), item = { name: $("productName").value.trim(), sku: $("productSku").value.trim().toUpperCase(), category: $("productCategory").value, price: +$("productPrice").value, stock: +$("productStock").value, threshold: +$("productThreshold").value, unit: $("productUnit").value.trim(), notes: $("productNotes").value.trim(), updatedAt: timestamp }; if (state.inventory !== "products") item.materialType = state.inventory; try { const itemId = id || push(activeRef()).key, activityId = push(activityRef).key, updates = {}; if (!id) item.createdAt = timestamp; updates[`${activePath()}/${itemId}`] = id ? { ...existing, ...item } : item; updates[`inventory/activity/${activityId}`] = record(id ? "edit" : "add", `${item.name} ${id ? "updated" : "added"}`, id ? "Item details and stock were edited." : `${item.stock} ${item.unit} entered into ${config().title.toLowerCase()}.`, timestamp); await update(ref(db), updates); closeModal("productModal"); toast(`${config().singular[0].toUpperCase() + config().singular.slice(1)} ${id ? "updated" : "added"}`); } catch (error) { toast(`Could not save: ${error.message}`, true); } });
+$("productRows").addEventListener("change", event => { const box = event.target.closest("[data-select-id]"); if (!box) return; box.checked ? state.selected.add(box.dataset.selectId) : state.selected.delete(box.dataset.selectId); renderSelection(); });
+$("productRows").addEventListener("click", async event => { const button = event.target.closest("[data-action]"); if (!button) return; event.preventDefault(); const { action, id } = button.dataset, item = state.items[id]; if (!item) return toast("This item has already changed. Please try again.", true); if (action === "edit") openItemModal(id); if (action === "stock") openStockModal(id); if (action === "delete" && confirm(`Delete ${item.name}? This cannot be undone.`)) try { const timestamp = Date.now(), activityId = push(activityRef).key, updates = {}; updates[`${activePath()}/${id}`] = null; updates[`inventory/activity/${activityId}`] = record("delete", `${item.name} deleted`, `${item.sku} was removed from ${config().title.toLowerCase()}.`, timestamp); await update(ref(db), updates); state.selected.delete(id); toast("Item deleted"); } catch (error) { toast(`Could not delete: ${error.message}`, true); } });
+$("stockForm").addEventListener("submit", async event => { event.preventDefault(); const id = $("stockProductId").value, item = state.items[id], type = new FormData(event.currentTarget).get("stockType"), quantity = +$("stockQuantity").value, next = +item.stock + (type === "in" ? quantity : -quantity); if (next < 0) return toast(`Only ${item.stock} ${item.unit} available`, true); try { const timestamp = Date.now(), activityId = push(activityRef).key, updates = {}; updates[`${activePath()}/${id}/stock`] = next; updates[`${activePath()}/${id}/updatedAt`] = timestamp; updates[`inventory/activity/${activityId}`] = record(type, `${type === "in" ? "Stock received" : "Stock released"}: ${item.name}`, `${type === "in" ? "+" : "−"}${quantity} ${item.unit}${$("stockReason").value.trim() ? ` · ${$("stockReason").value.trim()}` : ""}`, timestamp); await update(ref(db), updates); closeModal("stockModal"); toast("Stock updated"); } catch (error) { toast(`Could not update stock: ${error.message}`, true); } });
+
+$("selectAll").addEventListener("change", event => { filteredItems().forEach(([id]) => event.target.checked ? state.selected.add(id) : state.selected.delete(id)); renderItems(); });
+$("bulkEditButton").addEventListener("click", () => openBulkModal("edit")); $("bulkAdjustButton").addEventListener("click", () => openBulkModal("adjust"));
+$("bulkDeleteButton").addEventListener("click", async () => {
+  const ids = [...state.selected];
+  if (!ids.length || !confirm(`Delete ${ids.length} selected ${ids.length === 1 ? "item" : "items"}? This cannot be undone.`)) return;
   try {
-    const productId = id || push(productsRef).key;
-    const activityId = push(activityRef).key;
-    if (!id) product.createdAt = timestamp;
-    const updates = {};
-    updates[`inventory/products/${productId}`] = id ? { ...existing, ...product } : product;
-    updates[`inventory/activity/${activityId}`] = activityRecord(id ? "edit" : "add", id ? `${product.name} updated` : `${product.name} added`, id ? "Product details and stock were edited." : `${product.stock} ${product.unit} entered into inventory.`, timestamp);
-    await update(ref(db), updates);
-    closeModal("productModal"); toast(id ? "Product updated" : "Product added");
-  } catch (error) { toast(`Could not save: ${error.message}`, true); }
+    const timestamp = Date.now(), updates = {};
+    ids.forEach((id, index) => {
+      const item = state.items[id], activityId = push(activityRef).key;
+      updates[`${activePath()}/${id}`] = null;
+      updates[`inventory/activity/${activityId}`] = record("delete", `${item.name} deleted`, `${item.sku} was removed from ${config().title.toLowerCase()} in a bulk action.`, timestamp + index);
+    });
+    await update(ref(db), updates); state.selected.clear(); toast(`${ids.length} items deleted`);
+  } catch (error) { toast(`Could not delete items: ${error.message}`, true); }
 });
-
-$("productRows").addEventListener("click", async event => {
-  const button = event.target.closest("[data-action]"); if (!button) return; const { action, id } = button.dataset; const p = state.products[id];
-  if (action === "edit") openProductModal(id);
-  if (action === "stock") { $("stockProductId").value = id; $("stockProductName").textContent = `${p.name} · Current: ${p.stock} ${p.unit}`; $("stockQuantity").value = 1; $("stockReason").value = ""; $("stockModal").hidden = false; }
-  if (action === "delete" && confirm(`Delete ${p.name}? This cannot be undone.`)) { try { const timestamp = Date.now(); const activityId = push(activityRef).key; const updates = {}; updates[`inventory/products/${id}`] = null; updates[`inventory/activity/${activityId}`] = activityRecord("delete", `${p.name} deleted`, `${p.sku} was removed from the catalog.`, timestamp); await update(ref(db), updates); toast("Product deleted"); } catch (error) { toast(`Could not delete: ${error.message}`, true); } }
-});
-
-$("stockForm").addEventListener("submit", async event => {
-  event.preventDefault(); const id = $("stockProductId").value; const p = state.products[id]; const type = new FormData(event.currentTarget).get("stockType"); const quantity = Number($("stockQuantity").value); const nextStock = type === "in" ? Number(p.stock) + quantity : Number(p.stock) - quantity;
-  if (nextStock < 0) return toast(`Only ${p.stock} ${p.unit} available`, true);
-  try {
-    const timestamp = Date.now(); const activityId = push(activityRef).key; const updates = {};
-    updates[`inventory/products/${id}/stock`] = nextStock; updates[`inventory/products/${id}/updatedAt`] = timestamp;
-    updates[`inventory/activity/${activityId}`] = activityRecord(type, `${type === "in" ? "Stock received" : "Stock released"}: ${p.name}`, `${type === "in" ? "+" : "−"}${quantity} ${p.unit}${$("stockReason").value.trim() ? ` · ${$("stockReason").value.trim()}` : ""}`, timestamp);
-    await update(ref(db), updates); closeModal("stockModal"); toast("Stock updated");
-  } catch (error) { toast(`Could not update stock: ${error.message}`, true); }
+$("bulkForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const ids = [...state.selected], mode = $("bulkMode").value, timestamp = Date.now(), updates = {};
+  if (!ids.length) return;
+  const category = $("bulkCategory").value.trim(), threshold = $("bulkThreshold").value, unit = $("bulkUnit").value.trim();
+  const type = mode === "edit" ? "edit" : new FormData(event.currentTarget).get("bulkStockType");
+  const quantity = +$("bulkQuantity").value, reason = $("bulkReason").value.trim();
+  if (mode === "edit" && !category && threshold === "" && !unit) return toast("Enter at least one field to change", true);
+  const invalid = mode === "adjust" && ids.find(id => type === "out" && +state.items[id].stock < quantity);
+  if (invalid) return toast(`${state.items[invalid].name} has insufficient stock`, true);
+  ids.forEach((id, index) => {
+    const item = state.items[id], activityId = push(activityRef).key;
+    if (mode === "edit") {
+      const fields = [];
+      if (category) { updates[`${activePath()}/${id}/category`] = category; fields.push(`category: ${category}`); }
+      if (threshold !== "") { updates[`${activePath()}/${id}/threshold`] = +threshold; fields.push(`low-stock level: ${threshold}`); }
+      if (unit) { updates[`${activePath()}/${id}/unit`] = unit; fields.push(`unit: ${unit}`); }
+      updates[`inventory/activity/${activityId}`] = record("edit", `${item.name} updated`, `Bulk edit · ${fields.join(" · ")}`, timestamp + index);
+    } else {
+      updates[`${activePath()}/${id}/stock`] = +item.stock + (type === "in" ? quantity : -quantity);
+      updates[`inventory/activity/${activityId}`] = record(type, `${type === "in" ? "Stock received" : "Stock released"}: ${item.name}`, `${type === "in" ? "+" : "−"}${quantity} ${item.unit}${reason ? ` · ${reason}` : ""} · Bulk adjustment`, timestamp + index);
+    }
+    updates[`${activePath()}/${id}/updatedAt`] = timestamp;
+  });
+  try { await update(ref(db), updates); closeModal("bulkModal"); state.selected.clear(); toast(`${ids.length} items updated`); }
+  catch (error) { toast(`Could not apply bulk action: ${error.message}`, true); }
 });
 
 function setConnection(status, label) { document.querySelector(".status-dot").className = `status-dot ${status}`; $("syncStatus").textContent = label; }
+function stopDataListeners() { if (unsubscribeItems) unsubscribeItems(); if (unsubscribeCategories) unsubscribeCategories(); if (unsubscribeActivity) unsubscribeActivity(); if (unsubscribeRecipients) unsubscribeRecipients(); unsubscribeItems = unsubscribeCategories = unsubscribeActivity = unsubscribeRecipients = null; state.items = {}; state.categories = {}; state.activity = {}; state.recipients = {}; }
+function listenToActiveInventory() { if (unsubscribeItems) unsubscribeItems(); if (unsubscribeCategories) unsubscribeCategories(); state.items = {}; state.categories = {}; state.selected.clear(); renderItems(); unsubscribeItems = onValue(activeRef(), snapshot => { state.items = snapshot.val() || {}; renderItems(); setConnection("online", "Synced securely"); }, error => setConnection("error", error.message)); unsubscribeCategories = onValue(categoryRef(), snapshot => { state.categories = snapshot.val() || {}; renderItems(); }, error => setConnection("error", error.message)); }
+function startDataListeners() { stopDataListeners(); listenToActiveInventory(); unsubscribeActivity = onValue(activityRef, snapshot => { state.activity = snapshot.val() || {}; renderActivity(); }, error => setConnection("error", error.message)); unsubscribeRecipients = onValue(ref(db, "inventory/notificationRecipients"), snapshot => { state.recipients = snapshot.val() || {}; renderRecipients(); }, error => setConnection("error", error.message)); }
+function switchInventory(inventory) { state.inventory = inventory; state.search = ""; state.category = state.stock = "all"; state.selected.clear(); $("searchInput").value = ""; $("categoryFilter").value = $("stockFilter").value = "all"; const view = config(); $("pageTitle").textContent = view.title; $("addProductButton").innerHTML = `<span>＋</span> Add ${view.singular}`; listenToActiveInventory(); }
 
-function stopDataListeners() {
-  if (unsubscribeProducts) unsubscribeProducts(); if (unsubscribeActivity) unsubscribeActivity();
-  unsubscribeProducts = null; unsubscribeActivity = null; state.products = {}; state.activity = {};
-}
-
-function startDataListeners() {
-  stopDataListeners();
-  unsubscribeProducts = onValue(productsRef, snapshot => { state.products = snapshot.val() || {}; renderProducts(); setConnection("online", "Synced securely"); }, error => setConnection("error", error.message));
-  unsubscribeActivity = onValue(query(activityRef, limitToLast(100)), snapshot => { state.activity = snapshot.val() || {}; renderActivity(); }, error => setConnection("error", error.message));
-}
-
-$("signInButton").addEventListener("click", async () => {
-  $("authMessage").textContent = "Opening secure sign-in…";
-  try { await signInWithPopup(auth, provider); } catch (error) { $("authMessage").textContent = error.code === "auth/operation-not-allowed" ? "Google sign-in must be enabled in Firebase Authentication." : error.message; }
-});
-$("signOutButton").addEventListener("click", () => signOut(auth));
-onAuthStateChanged(auth, async user => {
-  const authorized = user?.email?.toLowerCase() === OWNER_EMAIL && user.emailVerified;
-  if (user && !authorized) { await signOut(auth); $("authMessage").textContent = "This Google account is not authorized."; return; }
-  $("authScreen").hidden = authorized;
-  if (authorized) startDataListeners(); else { stopDataListeners(); setConnection("", "Sign-in required"); }
-});
-
-$("searchInput").addEventListener("input", e => { state.search = e.target.value.trim().toLowerCase(); renderProducts(); });
-$("categoryFilter").addEventListener("change", e => { state.category = e.target.value; renderProducts(); });
-$("stockFilter").addEventListener("change", e => { state.stock = e.target.value; renderProducts(); });
-$("addProductButton").addEventListener("click", () => openProductModal()); $("emptyAddButton").addEventListener("click", () => openProductModal());
-document.querySelectorAll(".close-modal").forEach(el => el.addEventListener("click", () => closeModal("productModal"))); document.querySelectorAll(".close-stock-modal").forEach(el => el.addEventListener("click", () => closeModal("stockModal")));
-document.querySelectorAll(".modal-backdrop").forEach(el => el.addEventListener("click", e => { if (e.target === el) el.hidden = true; }));
-document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => { document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); button.classList.add("active"); const inventory = button.dataset.view === "inventory"; $("inventoryView").hidden = !inventory; $("activityView").hidden = inventory; $("pageTitle").textContent = inventory ? "Inventory overview" : "Activity log"; $("addProductButton").hidden = !inventory; $("sidebar").classList.remove("open"); }));
-$("menuButton").addEventListener("click", () => $("sidebar").classList.toggle("open"));
-$("todayLabel").textContent = new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
+$("signInButton").addEventListener("click", async () => { $("authMessage").textContent = "Opening secure sign-in…"; try { await signInWithPopup(auth, provider); } catch (error) { $("authMessage").textContent = error.code === "auth/operation-not-allowed" ? "Google sign-in must be enabled in Firebase Authentication." : error.message; } }); $("signOutButton").addEventListener("click", () => signOut(auth));
+onAuthStateChanged(auth, async user => { const authorized = user?.email?.toLowerCase() === OWNER_EMAIL && user.emailVerified; if (user && !authorized) { await signOut(auth); $("authMessage").textContent = "This Google account is not authorized."; return; } $("authScreen").hidden = authorized; if (authorized) startDataListeners(); else { stopDataListeners(); setConnection("", "Sign-in required"); } });
+$("searchInput").addEventListener("input", event => { state.search = event.target.value.trim().toLowerCase(); renderItems(); }); $("categoryFilter").addEventListener("change", event => { state.category = event.target.value; renderItems(); }); $("stockFilter").addEventListener("change", event => { state.stock = event.target.value; renderItems(); }); $("addProductButton").addEventListener("click", () => openItemModal()); $("emptyAddButton").addEventListener("click", () => openItemModal());
+$("recipientForm").addEventListener("submit", async event => { event.preventDefault(); const email = $("recipientEmail").value.trim().toLowerCase(); const existing = [OWNER_EMAIL, ...Object.values(state.recipients).map(item => item.email.toLowerCase())]; if (existing.includes(email)) return toast("That email address is already receiving alerts", true); try { const id = push(ref(db, "inventory/notificationRecipients")).key; await update(ref(db), { [`inventory/notificationRecipients/${id}`]: { email, createdAt: Date.now() } }); event.currentTarget.reset(); toast("Notification recipient added"); } catch (error) { toast(`Could not add recipient: ${error.message}`, true); } });
+$("recipientList").addEventListener("click", async event => { const button = event.target.closest("[data-recipient-id]"); if (!button) return; const recipient = state.recipients[button.dataset.recipientId]; if (!recipient || !confirm(`Stop sending stock alerts to ${recipient.email}?`)) return; try { await update(ref(db), { [`inventory/notificationRecipients/${button.dataset.recipientId}`]: null }); toast("Notification recipient removed"); } catch (error) { toast(`Could not remove recipient: ${error.message}`, true); } });
+$("addCategoryButton").addEventListener("click", async () => { const name = prompt(`Add a category for ${config().title.toLowerCase()}:`); if (!name?.trim()) return; const cleanName = name.trim(); if (categoryNames().some(value => value.toLowerCase() === cleanName.toLowerCase())) { renderProductCategory(categoryNames().find(value => value.toLowerCase() === cleanName.toLowerCase())); return toast("Category already exists"); } try { const id = push(categoryRef()).key; await update(ref(db), { [`inventory/categories/${config().categoryPath}/${id}`]: { name: cleanName, createdAt: Date.now() } }); renderProductCategory(cleanName); toast("Category added"); } catch (error) { toast(`Could not add category: ${error.message}`, true); } });
+document.querySelectorAll(".close-modal").forEach(el => el.addEventListener("click", () => closeModal("productModal"))); document.querySelectorAll(".close-stock-modal").forEach(el => el.addEventListener("click", () => closeModal("stockModal"))); document.querySelectorAll(".close-bulk-modal").forEach(el => el.addEventListener("click", () => closeModal("bulkModal"))); document.querySelectorAll(".modal-backdrop").forEach(el => el.addEventListener("click", event => { if (event.target === el) el.hidden = true; }));
+document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => { document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active")); button.classList.add("active"); const view = button.dataset.view, inventory = view === "inventory"; $("inventoryView").hidden = !inventory; $("activityView").hidden = view !== "activity"; $("notificationsView").hidden = view !== "notifications"; $("addProductButton").hidden = !inventory; if (inventory) switchInventory(button.dataset.inventory); else $("pageTitle").textContent = view === "activity" ? "Activity log" : "Notification settings"; $("sidebar").classList.remove("open"); })); $("menuButton").addEventListener("click", () => $("sidebar").classList.toggle("open"));
+function applyTheme(theme) { document.documentElement.dataset.theme = theme; try { localStorage.setItem("esseco-theme", theme); } catch (error) {} const dark = theme === "dark"; $("themeToggle").querySelector("span").textContent = dark ? "☀" : "☾"; $("themeToggle").setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} theme`); document.querySelector('meta[name="theme-color"]').content = dark ? "#101814" : "#12372a"; }
+$("themeToggle").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")); applyTheme(document.documentElement.dataset.theme || "light"); $("todayLabel").textContent = new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric" }).format(new Date());

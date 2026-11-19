@@ -29,6 +29,13 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function notificationRecipients(records, defaultEmail) {
+  return [...new Set([
+    defaultEmail,
+    ...Object.values(records || {}).map(record => String(record?.email || "").trim().toLowerCase())
+  ].filter(Boolean))];
+}
+
 function createDigest(alerts, products = {}) {
   const outCount = alerts.filter(alert => alert.status === "out").length;
   const lowCount = alerts.length - outCount;
@@ -82,4 +89,4 @@ function createDigest(alerts, products = {}) {
   };
 }
 
-module.exports = { stockStatus, findNewAlerts, buildCurrentStatuses, createDigest };
+module.exports = { stockStatus, findNewAlerts, buildCurrentStatuses, createDigest, notificationRecipients };

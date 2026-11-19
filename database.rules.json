@@ -8,6 +8,23 @@
           ".validate": "!data.exists() || (data.hasChildren(['name','sku','category','price','stock','threshold','unit']) && data.child('name').isString() && data.child('name').val().length <= 80 && data.child('sku').isString() && data.child('price').isNumber() && data.child('price').val() >= 0 && data.child('stock').isNumber() && data.child('stock').val() >= 0 && data.child('threshold').isNumber() && data.child('threshold').val() >= 0)"
         }
       },
+      "materials": {
+        "$materialId": {
+          ".validate": "!data.exists() || (data.hasChildren(['name','sku','category','price','stock','threshold','unit','materialType']) && data.child('name').isString() && data.child('name').val().length <= 80 && data.child('sku').isString() && data.child('price').isNumber() && data.child('price').val() >= 0 && data.child('stock').isNumber() && data.child('stock').val() >= 0 && data.child('threshold').isNumber() && data.child('threshold').val() >= 0 && (data.child('materialType').val() == 'raw' || data.child('materialType').val() == 'packaging'))"
+        }
+      },
+      "categories": {
+        "$inventoryType": {
+          "$categoryId": {
+            ".validate": "!data.exists() || (data.hasChildren(['name','createdAt']) && data.child('name').isString() && data.child('name').val().length > 0 && data.child('name').val().length <= 40 && data.child('createdAt').isNumber())"
+          }
+        }
+      },
+      "notificationRecipients": {
+        "$recipientId": {
+          ".validate": "!data.exists() || (data.hasChildren(['email','createdAt']) && data.child('email').isString() && data.child('email').val().length > 3 && data.child('email').val().length <= 254 && data.child('createdAt').isNumber())"
+        }
+      },
       "activity": {
         "$activityId": {
           ".validate": "!data.exists() || (data.hasChildren(['type','title','timestamp']) && data.child('type').isString() && data.child('title').isString() && data.child('timestamp').isNumber())"

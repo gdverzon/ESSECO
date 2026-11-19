@@ -6,13 +6,19 @@ A responsive stock inventory web app powered by Firebase Hosting and Firebase Re
 
 ## Features
 
-- Live product inventory with search and category/stock filters
-- Add, edit, and delete catalog items
+- Separate product, raw-material, and packaging inventories
+- Search and category/stock filters for each inventory
+- Add, edit, adjust, and delete individual items
+- Bulk edit, stock adjustment, and deletion for selected rows
+- Persistent light and dark themes
+- Managed category dropdowns with in-form category creation
 - Stock-in and stock-out adjustments with validation
 - Low-stock and out-of-stock indicators
 - Inventory valuation and real-time dashboard metrics
 - Recent activity audit trail
+- Itemized activity entries for every item changed by a bulk action
 - Owner-only Google authentication and protected database access
+- Manage multiple stock-alert email recipients from the Notifications table
 
 ## Firebase setup
 
@@ -53,7 +59,7 @@ Keep `android.keystore` in a secure backup. Android requires the same signing ke
 
 ## Stock alert emails
 
-The `.github/workflows/stock-alerts.yml` workflow checks inventory every 15 minutes and emails `gd.verzon@gmail.com` when a product enters low-stock status and again if it becomes out of stock. Further checks in the same status do not send duplicate alerts.
+The `.github/workflows/stock-alerts.yml` workflow checks product and materials inventory every 15 minutes and emails `gd.verzon@gmail.com` plus any addresses configured in the Notifications table when an item enters low-stock status and again if it becomes out of stock. Further checks in the same status do not send duplicate alerts.
 
 Before the workflow can send email:
 

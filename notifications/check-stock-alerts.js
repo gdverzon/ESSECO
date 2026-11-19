@@ -1,7 +1,7 @@
 const { applicationDefault, initializeApp } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
 const nodemailer = require("nodemailer");
-const { findNewAlerts, buildCurrentStatuses, createDigest } = require("./stock-alert");
+const { findNewAlerts, buildCurrentStatuses, createDigest, notificationRecipients } = require("./stock-alert");
 
 const notificationEmail = "gd.verzon@gmail.com";
 const appPassword = process.env.GMAIL_APP_PASSWORD;
@@ -15,11 +15,17 @@ initializeApp({
 
 async function run() {
   const database = getDatabase();
-  const [productsSnapshot, statusesSnapshot] = await Promise.all([
+  const [productsSnapshot, materialsSnapshot, recipientsSnapshot, statusesSnapshot] = await Promise.all([
     database.ref("inventory/products").get(),
+    database.ref("inventory/materials").get(),
+    database.ref("inventory/notificationRecipients").get(),
     database.ref("system/stockAlertStatuses").get()
   ]);
-  const products = productsSnapshot.val() || {};
+  const products = Object.fromEntries([
+    ...Object.entries(productsSnapshot.val() || {}).map(([id, item]) => [`product_${id}`, item]),
+    ...Object.entries(materialsSnapshot.val() || {}).map(([id, item]) => [`material_${id}`, item])
+  ]);
+  const recipients = notificationRecipients(recipientsSnapshot.val(), notificationEmail);
   const previousStatuses = statusesSnapshot.val() || {};
   const alerts = findNewAlerts(products, previousStatuses);
 
@@ -30,10 +36,10 @@ async function run() {
     });
     await transporter.sendMail({
       from: `ESSECO Inventory <${notificationEmail}>`,
-      to: notificationEmail,
+      to: recipients,
       ...createDigest(alerts, products)
     });
-    console.log(`Sent ${alerts.length} stock alert(s) to ${notificationEmail}.`);
+    console.log(`Sent ${alerts.length} stock alert(s) to ${recipients.length} recipient(s).`);
   } else {
     console.log("No new low-stock or out-of-stock alerts.");
   }

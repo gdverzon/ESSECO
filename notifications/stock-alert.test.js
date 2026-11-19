@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { stockStatus, findNewAlerts, buildCurrentStatuses, createDigest } = require("./stock-alert");
+const { stockStatus, findNewAlerts, buildCurrentStatuses, createDigest, notificationRecipients } = require("./stock-alert");
 
 test("classifies stock levels", () => {
   assert.equal(stockStatus({ stock: 8, threshold: 5 }), "healthy");
@@ -33,4 +33,12 @@ test("creates one escaped digest with every product status", () => {
   assert.match(digest.html, /HEALTHY/);
   assert.match(digest.html, /Rice/);
   assert.match(digest.text, /1 healthy/);
+});
+
+test("builds a unique recipient list with the default address", () => {
+  assert.deepEqual(notificationRecipients({
+    first: { email: "OPS@example.com" },
+    duplicate: { email: "ops@example.com" },
+    second: { email: "stock@example.com" }
+  }, "gd.verzon@gmail.com"), ["gd.verzon@gmail.com", "ops@example.com", "stock@example.com"]);
 });
