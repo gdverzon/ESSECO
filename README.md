@@ -12,6 +12,7 @@ A responsive stock inventory web app powered by Firebase Hosting and Firebase Re
 - Bulk edit, stock adjustment, and deletion for selected rows
 - Persistent light and dark themes
 - Managed category dropdowns with in-form category creation
+- Managed unit dropdowns with in-form unit creation
 - Stock-in and stock-out adjustments with validation
 - Low-stock and out-of-stock indicators
 - Inventory valuation and real-time dashboard metrics
