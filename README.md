@@ -72,6 +72,8 @@ Before the workflow can send email:
 
 The monitor stores product status under `system/stockAlertStatuses` in Realtime Database so repeated runs do not resend the same alert. This approach does not require the Firebase Blaze plan. The Gmail app password must never be committed to this repository.
 
+The `.github/workflows/daily-stock-report.yml` workflow sends a complete current-stock report every day at 8:00 AM Philippine time to the owner and all addresses maintained in the website's Notifications table. It can also be run manually from the GitHub Actions tab.
+
 # Android APK from GitHub Actions
 
 GitHub Actions automatically builds a debug APK when Android project files are pushed to `main`. You can also start a build manually:

@@ -1,0 +1,44 @@
+name: Send daily stock report
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-stock-report
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Firebase
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ESSECO_EA869 }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: notifications/package-lock.json
+
+      - name: Install notification dependencies
+        run: npm ci --prefix notifications
+
+      - name: Test notification logic
+        run: npm test --prefix notifications
+
+      - name: Send current stock report
+        run: node notifications/check-stock-alerts.js
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DAILY_STOCK_REPORT: "true"

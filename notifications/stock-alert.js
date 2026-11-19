@@ -36,7 +36,8 @@ function notificationRecipients(records, defaultEmail) {
   ].filter(Boolean))];
 }
 
-function createDigest(alerts, products = {}) {
+function createDigest(alerts, products = {}, options = {}) {
+  const daily = options.daily === true;
   const outCount = alerts.filter(alert => alert.status === "out").length;
   const lowCount = alerts.length - outCount;
   const alertSummary = [
@@ -73,12 +74,12 @@ function createDigest(alerts, products = {}) {
     </tr>`).join("");
 
   return {
-    subject: `[ESSECO] Stock alert: ${alertSummary}`,
-    text: `New alerts: ${alertSummary}\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
+    subject: daily ? `[ESSECO] Daily stock report: ${inventory.length} items` : `[ESSECO] Stock alert: ${alertSummary}`,
+    text: daily ? `Daily stock report\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app` : `New alerts: ${alertSummary}\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
     html: `
       <div style="font-family:Arial,sans-serif;color:#17231d;max-width:640px">
-        <h2>ESSECO stock alert</h2>
-        <p><strong>${escapeHtml(alertSummary)}</strong> requires attention.</p>
+        <h2>${daily ? "ESSECO daily stock report" : "ESSECO stock alert"}</h2>
+        <p>${daily ? "Here is the current inventory status." : `<strong>${escapeHtml(alertSummary)}</strong> requires attention.`}</p>
         <p>Current inventory: ${escapeHtml(inventorySummary)}.</p>
         <table style="border-collapse:collapse;width:100%">
           <thead><tr><th>Status</th><th>Product</th><th>Stock</th><th>Threshold</th></tr></thead>

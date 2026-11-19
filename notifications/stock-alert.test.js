@@ -42,3 +42,12 @@ test("builds a unique recipient list with the default address", () => {
     second: { email: "stock@example.com" }
   }, "gd.verzon@gmail.com"), ["gd.verzon@gmail.com", "ops@example.com", "stock@example.com"]);
 });
+
+test("creates a daily report even without new alerts", () => {
+  const report = createDigest([], {
+    beans: { name: "Beans", sku: "COF-01", stock: 7, threshold: 5, unit: "bags" }
+  }, { daily: true });
+  assert.equal(report.subject, "[ESSECO] Daily stock report: 1 items");
+  assert.match(report.text, /Daily stock report/);
+  assert.match(report.html, /current inventory status/);
+});
