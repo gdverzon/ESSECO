@@ -1,41 +1,74 @@
 {
   "rules": {
     "inventory": {
-      ".read": "auth != null && auth.token.email == 'gd.verzon@gmail.com' && auth.token.email_verified == true",
-      ".write": "auth != null && auth.token.email == 'gd.verzon@gmail.com' && auth.token.email_verified == true",
       "products": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
         "$productId": {
-          ".validate": "!data.exists() || (data.hasChildren(['name','sku','category','price','stock','threshold','unit']) && data.child('name').isString() && data.child('name').val().length <= 80 && data.child('sku').isString() && data.child('price').isNumber() && data.child('price').val() >= 0 && data.child('stock').isNumber() && data.child('stock').val() >= 0 && data.child('threshold').isNumber() && data.child('threshold').val() >= 0)"
+          ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || (root.child('roles').child(auth.uid).val() == 'user' && newData.exists() && ((!data.exists()) || (data.exists() && newData.child('name').val() == data.child('name').val() && newData.child('sku').val() == data.child('sku').val() && newData.child('category').val() == data.child('category').val() && newData.child('price').val() == data.child('price').val() && newData.child('threshold').val() == data.child('threshold').val() && newData.child('unit').val() == data.child('unit').val() && newData.child('notes').val() == data.child('notes').val() && newData.child('createdAt').val() == data.child('createdAt').val()))))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['name','sku','category','price','stock','threshold','unit']) && newData.child('name').isString() && newData.child('name').val().length <= 80 && newData.child('sku').isString() && newData.child('price').isNumber() && newData.child('price').val() >= 0 && newData.child('stock').isNumber() && newData.child('stock').val() >= 0 && newData.child('threshold').isNumber() && newData.child('threshold').val() >= 0)"
         }
       },
       "materials": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
         "$materialId": {
-          ".validate": "!data.exists() || (data.hasChildren(['name','sku','category','price','stock','threshold','unit','materialType']) && data.child('name').isString() && data.child('name').val().length <= 80 && data.child('sku').isString() && data.child('price').isNumber() && data.child('price').val() >= 0 && data.child('stock').isNumber() && data.child('stock').val() >= 0 && data.child('threshold').isNumber() && data.child('threshold').val() >= 0 && (data.child('materialType').val() == 'raw' || data.child('materialType').val() == 'packaging'))"
+          ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || (root.child('roles').child(auth.uid).val() == 'user' && newData.exists() && ((!data.exists()) || (data.exists() && newData.child('name').val() == data.child('name').val() && newData.child('sku').val() == data.child('sku').val() && newData.child('category').val() == data.child('category').val() && newData.child('price').val() == data.child('price').val() && newData.child('threshold').val() == data.child('threshold').val() && newData.child('unit').val() == data.child('unit').val() && newData.child('notes').val() == data.child('notes').val() && newData.child('createdAt').val() == data.child('createdAt').val() && newData.child('materialType').val() == data.child('materialType').val()))))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['name','sku','category','price','stock','threshold','unit','materialType']) && newData.child('name').isString() && newData.child('name').val().length <= 80 && newData.child('sku').isString() && newData.child('price').isNumber() && newData.child('price').val() >= 0 && newData.child('stock').isNumber() && newData.child('stock').val() >= 0 && newData.child('threshold').isNumber() && newData.child('threshold').val() >= 0 && (newData.child('materialType').val() == 'raw' || newData.child('materialType').val() == 'packaging'))"
         }
       },
       "categories": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
         "$inventoryType": {
           "$categoryId": {
-            ".validate": "!data.exists() || (data.hasChildren(['name','createdAt']) && data.child('name').isString() && data.child('name').val().length > 0 && data.child('name').val().length <= 40 && data.child('createdAt').isNumber())"
+            ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || (root.child('roles').child(auth.uid).val() == 'user' && !data.exists() && newData.exists()))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['name','createdAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('createdAt').isNumber())"
           }
         }
       },
       "units": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
         "$inventoryType": {
           "$unitId": {
-            ".validate": "!data.exists() || (data.hasChildren(['name','createdAt']) && data.child('name').isString() && data.child('name').val().length > 0 && data.child('name').val().length <= 20 && data.child('createdAt').isNumber())"
+            ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || (root.child('roles').child(auth.uid).val() == 'user' && !data.exists() && newData.exists()))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['name','createdAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 20 && newData.child('createdAt').isNumber())"
           }
         }
       },
       "notificationRecipients": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+        ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
         "$recipientId": {
           ".validate": "!data.exists() || (data.hasChildren(['email','createdAt']) && data.child('email').isString() && data.child('email').val().length > 3 && data.child('email').val().length <= 254 && data.child('createdAt').isNumber())"
         }
       },
       "activity": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
         "$activityId": {
-          ".validate": "!data.exists() || (data.hasChildren(['type','title','timestamp']) && data.child('type').isString() && data.child('title').isString() && data.child('timestamp').isNumber())"
+          ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || (root.child('roles').child(auth.uid).val() == 'user' && !data.exists() && newData.child('performedByUid').val() == auth.uid && newData.child('performedByEmail').val() == auth.token.email && (newData.child('inventory').val() == 'products' || newData.child('inventory').val() == 'raw' || newData.child('inventory').val() == 'packaging') && (newData.child('type').val() == 'add' || newData.child('type').val() == 'in' || newData.child('type').val() == 'out')))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['type','title','timestamp','inventory','performedByUid','performedByEmail']) && newData.child('type').isString() && newData.child('title').isString() && newData.child('timestamp').isNumber() && newData.child('performedByUid').isString() && newData.child('performedByEmail').isString())"
         }
+      }
+    },
+    "appSettings": {
+      "branding": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin' || root.child('roles').child(auth.uid).val() == 'user')",
+        ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+        ".validate": "newData.hasChildren(['title','logoUrl','theme','primaryColor','accentColor']) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 40 && newData.child('logoUrl').isString() && newData.child('logoUrl').val().length <= 500 && (newData.child('theme').val() == 'light' || newData.child('theme').val() == 'dark') && newData.child('primaryColor').isString() && newData.child('accentColor').isString()"
+      }
+    },
+    "roles": {
+      ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+      "$uid": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.uid == $uid || auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+        ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+        ".validate": "!newData.exists() || newData.val() == 'admin' || newData.val() == 'user'"
+      }
+    },
+    "accountLogs": {
+      ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+      "$uid": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.uid == $uid || auth.token.email == 'gd.verzon@gmail.com' || root.child('roles').child(auth.uid).val() == 'admin')",
+        ".write": "auth != null && auth.uid == $uid && auth.token.email_verified == true",
+        ".validate": "newData.hasChildren(['email','displayName','firstAccess','lastAccess','signInCount']) && newData.child('email').val() == auth.token.email && newData.child('displayName').isString() && newData.child('firstAccess').isNumber() && newData.child('lastAccess').isNumber() && newData.child('signInCount').isNumber()"
       }
     }
   }

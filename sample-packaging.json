@@ -1,0 +1,12 @@
+{
+  "paper-cups-12oz": { "name": "Paper Cups 12 oz", "sku": "PKG-001", "category": "Drinkware", "price": 185, "stock": 42, "threshold": 15, "unit": "sleeves", "notes": "50 compostable cups per sleeve", "materialType": "packaging" },
+  "paper-cups-16oz": { "name": "Paper Cups 16 oz", "sku": "PKG-002", "category": "Drinkware", "price": 210, "stock": 12, "threshold": 15, "unit": "sleeves", "notes": "50 compostable cups per sleeve", "materialType": "packaging" },
+  "cup-lids-12oz": { "name": "Cup Lids 12 oz", "sku": "PKG-003", "category": "Drinkware", "price": 135, "stock": 28, "threshold": 12, "unit": "sleeves", "notes": "50 recyclable lids per sleeve", "materialType": "packaging" },
+  "cup-lids-16oz": { "name": "Cup Lids 16 oz", "sku": "PKG-004", "category": "Drinkware", "price": 150, "stock": 5, "threshold": 12, "unit": "sleeves", "notes": "50 recyclable lids per sleeve", "materialType": "packaging" },
+  "glass-bottles-350ml": { "name": "Glass Bottles 350 ml", "sku": "PKG-005", "category": "Bottles", "price": 480, "stock": 20, "threshold": 8, "unit": "boxes", "notes": "24 bottles with caps per box", "materialType": "packaging" },
+  "kraft-coffee-bags": { "name": "Kraft Coffee Bags 1 kg", "sku": "PKG-006", "category": "Bags", "price": 360, "stock": 7, "threshold": 10, "unit": "packs", "notes": "25 valve bags per pack", "materialType": "packaging" },
+  "resealable-snack-pouches": { "name": "Resealable Snack Pouches", "sku": "PKG-007", "category": "Bags", "price": 290, "stock": 16, "threshold": 8, "unit": "packs", "notes": "50 food-grade pouches per pack", "materialType": "packaging" },
+  "gift-box-small": { "name": "Small Gift Box", "sku": "PKG-008", "category": "Boxes", "price": 260, "stock": 10, "threshold": 6, "unit": "packs", "notes": "Ten recyclable boxes per pack", "materialType": "packaging" },
+  "gift-box-large": { "name": "Large Gift Box", "sku": "PKG-009", "category": "Boxes", "price": 340, "stock": 0, "threshold": 5, "unit": "packs", "notes": "Ten recyclable boxes per pack", "materialType": "packaging" },
+  "printed-label-roll": { "name": "Printed Product Labels", "sku": "PKG-010", "category": "Labels", "price": 520, "stock": 9, "threshold": 4, "unit": "rolls", "notes": "500 waterproof labels per roll", "materialType": "packaging" }
+}

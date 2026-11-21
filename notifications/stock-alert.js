@@ -59,32 +59,40 @@ function createDigest(alerts, products = {}, options = {}) {
     return counts;
   }, {});
   const inventorySummary = `${statusCounts.out || 0} out of stock, ${statusCounts.low || 0} low stock, ${statusCounts.healthy || 0} healthy`;
-  const labels = { out: "OUT OF STOCK", low: "LOW STOCK", healthy: "HEALTHY", missing: "MISSING" };
   const colors = { out: "#b42318", low: "#b54708", healthy: "#157347", missing: "#667085" };
 
-  const textRows = inventory.map(({ product, status }) =>
-    `${labels[status]}: ${product?.name || "Unnamed product"} (${product?.sku || "No SKU"}) - ${Number(product?.stock) || 0} ${product?.unit || "units"}, threshold ${Number(product?.threshold) || 0}`
-  );
-  const htmlRows = inventory.map(({ product, status }) => `
-    <tr>
-      <td style="padding:9px;border-bottom:1px solid #ddd;color:${colors[status]};font-weight:bold">${labels[status]}</td>
-      <td style="padding:9px;border-bottom:1px solid #ddd"><strong>${escapeHtml(product?.name || "Unnamed product")}</strong><br><small>${escapeHtml(product?.sku || "No SKU")}</small></td>
-      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.stock) || 0} ${escapeHtml(product?.unit || "units")}</td>
-      <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.threshold) || 0}</td>
-    </tr>`).join("");
+  const sections = [
+    { status: "out", heading: "OUT OF STOCK" },
+    { status: "low", heading: "LOW STOCK" },
+    { status: "healthy", heading: "HEALTHY STOCK" }
+  ];
+  const textSections = sections.map(section => {
+    const items = inventory.filter(item => item.status === section.status);
+    const rows = items.length ? items.map(({ product }) =>
+      `- ${product?.name || "Unnamed product"} (${product?.sku || "No SKU"}) - ${Number(product?.stock) || 0} ${product?.unit || "units"}, threshold ${Number(product?.threshold) || 0}`
+    ) : ["- No items"];
+    return `${section.heading} (${items.length})\n${rows.join("\n")}`;
+  });
+  const htmlSections = sections.map(section => {
+    const items = inventory.filter(item => item.status === section.status);
+    const rows = items.length ? items.map(({ product }) => `
+      <tr>
+        <td style="padding:9px;border-bottom:1px solid #ddd"><strong>${escapeHtml(product?.name || "Unnamed product")}</strong><br><small>${escapeHtml(product?.sku || "No SKU")}</small></td>
+        <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.stock) || 0} ${escapeHtml(product?.unit || "units")}</td>
+        <td style="padding:9px;border-bottom:1px solid #ddd">${Number(product?.threshold) || 0}</td>
+      </tr>`).join("") : '<tr><td colspan="3" style="padding:12px;color:#667085">No items in this status.</td></tr>';
+    return `<h3 style="margin:24px 0 8px;color:${colors[section.status]}">${section.heading} (${items.length})</h3><table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left">Item</th><th style="text-align:left">Stock</th><th style="text-align:left">Threshold</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }).join("");
 
   return {
     subject: daily ? `[ESSECO] Daily stock report: ${inventory.length} items` : `[ESSECO] Stock alert: ${alertSummary}`,
-    text: daily ? `Daily stock report\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app` : `New alerts: ${alertSummary}\nCurrent inventory: ${inventorySummary}\n\n${textRows.join("\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
+    text: daily ? `Daily stock report\nCurrent inventory: ${inventorySummary}\n\n${textSections.join("\n\n")}\n\nOpen inventory: https://esseco-ea869.web.app` : `New alerts: ${alertSummary}\nCurrent inventory: ${inventorySummary}\n\n${textSections.join("\n\n")}\n\nOpen inventory: https://esseco-ea869.web.app`,
     html: `
       <div style="font-family:Arial,sans-serif;color:#17231d;max-width:640px">
         <h2>${daily ? "ESSECO daily stock report" : "ESSECO stock alert"}</h2>
         <p>${daily ? "Here is the current inventory status." : `<strong>${escapeHtml(alertSummary)}</strong> requires attention.`}</p>
         <p>Current inventory: ${escapeHtml(inventorySummary)}.</p>
-        <table style="border-collapse:collapse;width:100%">
-          <thead><tr><th>Status</th><th>Product</th><th>Stock</th><th>Threshold</th></tr></thead>
-          <tbody>${htmlRows}</tbody>
-        </table>
+        ${htmlSections}
         <p style="margin-top:24px"><a href="https://esseco-ea869.web.app" style="background:#12372a;color:white;padding:11px 16px;text-decoration:none;border-radius:6px">Open inventory</a></p>
       </div>`
   };

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=8">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("esseco-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
@@ -20,20 +20,32 @@
       <span class="brand-mark">E</span>
       <p class="eyebrow">Secure inventory access</p>
       <h1>Welcome to ESSECO</h1>
-      <p>Sign in with the authorized Google account to manage inventory.</p>
+      <p>Sign in with a verified Google account. New accounts require an administrator to assign access.</p>
       <button class="google-button" id="signInButton"><span>G</span> Continue with Google</button>
       <small id="authMessage">Protected by Firebase Authentication</small>
     </div>
   </section>
+  <section class="auth-screen" id="pendingScreen" hidden>
+    <div class="auth-card">
+      <span class="brand-mark">E</span>
+      <p class="eyebrow">Access pending</p>
+      <h1>Waiting for an admin</h1>
+      <p>Your sign-in was recorded. An administrator must assign your account a role before you can open the inventory.</p>
+      <button class="secondary-button" id="pendingSignOutButton">Sign out</button>
+      <small id="pendingEmail"></small>
+    </div>
+  </section>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="brand-mark">E</span><div><strong>ESSECO</strong><small>Inventory system</small></div></div>
+      <div class="brand"><span class="brand-mark">E</span><div><strong id="brandTitle">ESSECO</strong><small>Inventory system</small></div></div>
       <nav aria-label="Primary navigation">
-        <button class="nav-item active" data-view="inventory" data-inventory="products"><span>▦</span> Product inventory</button>
-        <button class="nav-item" data-view="inventory" data-inventory="raw"><span>▧</span> Raw materials</button>
-        <button class="nav-item" data-view="inventory" data-inventory="packaging"><span>□</span> Packaging inventory</button>
+        <button class="nav-item active" data-view="inventory" data-inventory="products"><span>▦</span> Product</button>
+        <button class="nav-item" data-view="inventory" data-inventory="raw"><span>▧</span> Raw Materials</button>
+        <button class="nav-item" data-view="inventory" data-inventory="packaging"><span>□</span> Packaging</button>
         <button class="nav-item" data-view="activity"><span>↻</span> Activity</button>
-        <button class="nav-item" data-view="notifications"><span>✉</span> Notifications</button>
+        <button class="nav-item admin-only" data-view="notifications"><span>✉</span> Notifications</button>
+        <button class="nav-item admin-only" data-view="accounts"><span>◎</span> Accounts</button>
+        <button class="nav-item admin-only" data-view="branding"><span>◈</span> Branding</button>
       </nav>
       <div class="sidebar-note"><span class="status-dot"></span><div><strong>Live database</strong><small id="syncStatus">Connecting…</small></div></div>
       <p class="sidebar-footer">Stock clarity, every day.</p>
@@ -43,7 +55,7 @@
       <header class="topbar">
         <button class="icon-button menu-button" id="menuButton" aria-label="Open menu">☰</button>
         <div><p class="eyebrow" id="todayLabel"></p><h1 id="pageTitle">Inventory overview</h1></div>
-        <div class="topbar-actions"><button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><span aria-hidden="true">☾</span></button><button class="secondary-button" id="signOutButton">Sign out</button><button class="primary-button" id="addProductButton"><span>＋</span> Add product</button></div>
+        <div class="topbar-actions"><span class="role-badge" id="roleBadge"></span><button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><span aria-hidden="true">☾</span></button><button class="secondary-button" id="signOutButton">Sign out</button></div>
       </header>
 
       <section id="inventoryView">
@@ -61,6 +73,7 @@
               <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search name, SKU…" aria-label="Search products"></label>
               <select id="categoryFilter" aria-label="Filter by category"><option value="all">All categories</option></select>
               <select id="stockFilter" aria-label="Filter by stock status"><option value="all">All stock</option><option value="healthy">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+              <button class="primary-button toolbar-add-button" id="addProductButton"><span>＋</span> Add product</button>
             </div>
           </div>
           <div class="bulk-bar" id="bulkBar" hidden><strong><span id="selectedCount">0</span> selected</strong><div class="bulk-actions"><button class="secondary-button" id="bulkEditButton" type="button">Edit fields</button><button class="secondary-button" id="bulkAdjustButton" type="button">Adjust stock</button><button class="secondary-button danger-button" id="bulkDeleteButton" type="button">Delete</button></div></div>
@@ -75,14 +88,37 @@
       </section>
 
       <section id="activityView" hidden>
-        <section class="panel activity-panel"><div class="panel-header"><div><h2>Stock activity</h2><p>A live audit trail of inventory changes</p></div></div><div id="activityList" class="activity-list"></div></section>
+        <section class="panel activity-panel"><div class="panel-header"><div><h2>Stock activity</h2><p>A live audit trail of inventory changes</p></div><div class="toolbar activity-filters"><label class="search-box"><span>⌕</span><input id="activitySearch" type="search" placeholder="Search activity…" aria-label="Search activity"></label><select id="activityTypeFilter" aria-label="Filter activity type"><option value="all">All actions</option><option value="add">Added</option><option value="in">Stock in</option><option value="out">Stock out</option><option value="edit">Edited</option><option value="delete">Deleted</option></select><select id="activityInventoryFilter" aria-label="Filter inventory"><option value="all">All inventory</option><option value="products">Products</option><option value="raw">Raw materials</option><option value="packaging">Packaging</option></select></div></div><div id="activityList" class="activity-list"></div></section>
       </section>
 
       <section id="notificationsView" hidden>
         <section class="panel settings-panel">
-          <div class="panel-header"><div><h2>Email notification recipients</h2><p>Low-stock and out-of-stock alerts are sent to every address below.</p></div></div>
+          <div class="panel-header"><div><h2>Daily stock report recipients</h2><p>The grouped daily stock-status report is sent to every address below.</p></div></div>
           <form id="recipientForm" class="recipient-form"><label>Email address<span class="recipient-input-row"><input id="recipientEmail" type="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"><button class="primary-button" type="submit">Add recipient</button></span></label></form>
           <div class="table-wrap recipient-table-wrap"><table class="recipient-table"><thead><tr><th>Email address</th><th>Role</th><th class="align-right">Actions</th></tr></thead><tbody id="recipientList"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="accountsView" hidden>
+        <section class="panel settings-panel">
+          <div class="panel-header"><div><h2>Account access and roles</h2><p>Assign permissions and review who has accessed ESSECO.</p></div></div>
+          <div class="table-wrap account-table-wrap"><table class="account-table"><thead><tr><th>Account</th><th>Role</th><th>First access</th><th>Last access</th><th class="align-right">Sign-ins</th></tr></thead><tbody id="accountList"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="brandingView" hidden>
+        <section class="panel settings-panel">
+          <div class="panel-header"><div><h2>Website branding</h2><p>Change the shared title, logo, theme, and brand colors.</p></div></div>
+          <form id="brandingForm">
+            <div class="form-grid">
+              <label>Website title<input id="brandingTitle" required maxlength="40" placeholder="ESSECO"></label>
+              <label>Logo image URL<input id="brandingLogo" type="url" maxlength="500" placeholder="https://example.com/logo.png"></label>
+              <label>Default theme<select id="brandingTheme"><option value="light">Light</option><option value="dark">Dark</option></select></label>
+              <label>Primary color<input id="brandingPrimary" type="color" value="#174c37"></label>
+              <label>Accent color<input id="brandingAccent" type="color" value="#dff3c8"></label>
+            </div>
+            <div class="modal-actions"><button class="primary-button" type="submit">Save branding</button></div>
+          </form>
         </section>
       </section>
     </main>

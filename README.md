@@ -18,8 +18,10 @@ A responsive stock inventory web app powered by Firebase Hosting and Firebase Re
 - Inventory valuation and real-time dashboard metrics
 - Recent activity audit trail
 - Itemized activity entries for every item changed by a bulk action
-- Owner-only Google authentication and protected database access
-- Manage multiple stock-alert email recipients from the Notifications table
+- Admin and user roles with server-enforced Firebase permissions
+- Admin role delegation and account access logs
+- Filterable inventory activity audit trail
+- Manage multiple daily stock-report recipients from the Notifications table
 
 ## Firebase setup
 
@@ -33,7 +35,17 @@ The project is already configured for Firebase project `esseco-ea869`.
    firebase deploy --only database
    ```
 
-Database access is restricted to the verified Google account `gd.verzon@gmail.com`. Change `OWNER_EMAIL` in `app.js` and the matching email in `database.rules.json` when transferring ownership.
+The verified Google account `gd.verzon@gmail.com` is the permanent bootstrap admin. Other verified Google accounts are recorded when they first sign in and remain pending until an admin assigns a role from **Accounts**. Admins have full control and can manage the shared website title, logo, theme, and brand colors. Users can view inventory and activity, add items, create categories and units, and adjust stock across Products, Raw Materials, and Packaging. Users cannot edit item details, delete items, or manage notifications, accounts, roles, or branding. These restrictions are enforced by `database.rules.json`, not only by the interface.
+
+## Sample inventory data
+
+The repository includes 10 ready-to-import records for each inventory:
+
+- `sample-products.json` goes under `inventory/products`.
+- `sample-raw-materials.json` goes under `inventory/materials`.
+- `sample-packaging.json` also goes under `inventory/materials`.
+
+Import the product file at the Products path, then import both material files at the Materials path without replacing existing records. Each material record includes the required `materialType` value so it appears in the correct Raw Materials or Packaging view.
 
 ## Deployment workflow
 
@@ -60,19 +72,17 @@ Keep `android.keystore` in a secure backup. Android requires the same signing ke
 
 ## Stock alert emails
 
-The `.github/workflows/stock-alerts.yml` workflow checks product and materials inventory every 15 minutes and emails `gd.verzon@gmail.com` plus any addresses configured in the Notifications table when an item enters low-stock status and again if it becomes out of stock. Further checks in the same status do not send duplicate alerts.
+The `.github/workflows/daily-stock-report.yml` workflow sends one complete stock-status report every day at 8:00 AM Philippine time to `gd.verzon@gmail.com` and all addresses maintained in the website's Notifications table. The email separates inventory into **Out of Stock**, **Low Stock**, and **Healthy Stock** sections. It can also be run manually from the GitHub Actions tab.
 
-Before the workflow can send email:
+Before the workflow can send the daily report:
 
 1. Enable two-step verification for `gd.verzon@gmail.com` and create a Google App Password.
 2. In the GitHub repository, open **Settings → Secrets and variables → Actions**.
 3. Create a repository secret named `GMAIL_APP_PASSWORD` containing the app password.
 4. Confirm that `FIREBASE_SERVICE_ACCOUNT_ESSECO_EA869` contains the Firebase service-account JSON.
-5. Push the workflow to `main`, then run **Check stock alerts** manually from the GitHub Actions tab for the first test.
+5. Push the workflow to `main`, then run **Send daily stock report** manually from the GitHub Actions tab for the first test.
 
-The monitor stores product status under `system/stockAlertStatuses` in Realtime Database so repeated runs do not resend the same alert. This approach does not require the Firebase Blaze plan. The Gmail app password must never be committed to this repository.
-
-The `.github/workflows/daily-stock-report.yml` workflow sends a complete current-stock report every day at 8:00 AM Philippine time to the owner and all addresses maintained in the website's Notifications table. It can also be run manually from the GitHub Actions tab.
+Low-stock and out-of-stock event alerts are disabled; only the daily grouped report is sent. The Gmail app password must never be committed to this repository.
 
 # Android APK from GitHub Actions
 

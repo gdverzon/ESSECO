@@ -45,9 +45,13 @@ test("builds a unique recipient list with the default address", () => {
 
 test("creates a daily report even without new alerts", () => {
   const report = createDigest([], {
-    beans: { name: "Beans", sku: "COF-01", stock: 7, threshold: 5, unit: "bags" }
+    beans: { name: "Beans", sku: "COF-01", stock: 7, threshold: 5, unit: "bags" },
+    tea: { name: "Tea", sku: "TEA-01", stock: 3, threshold: 5, unit: "boxes" },
+    milk: { name: "Milk", sku: "MLK-01", stock: 0, threshold: 2, unit: "bottles" }
   }, { daily: true });
-  assert.equal(report.subject, "[ESSECO] Daily stock report: 1 items");
+  assert.equal(report.subject, "[ESSECO] Daily stock report: 3 items");
   assert.match(report.text, /Daily stock report/);
   assert.match(report.html, /current inventory status/);
+  assert.match(report.text, /OUT OF STOCK \(1\)[\s\S]*LOW STOCK \(1\)[\s\S]*HEALTHY STOCK \(1\)/);
+  assert.match(report.html, /OUT OF STOCK \(1\)[\s\S]*LOW STOCK \(1\)[\s\S]*HEALTHY STOCK \(1\)/);
 });

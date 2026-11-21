@@ -1,4 +1,4 @@
-const CACHE_NAME = "esseco-shell-v6";
+const CACHE_NAME = "esseco-shell-v12";
 const APP_SHELL = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/icons/app-icon.svg"];
 
 self.addEventListener("install", event => {

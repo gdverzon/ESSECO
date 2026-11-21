@@ -1,0 +1,12 @@
+{
+  "arabica-green-beans": { "name": "Arabica Green Coffee Beans", "sku": "RAW-001", "category": "Coffee Ingredients", "price": 420, "stock": 35, "threshold": 12, "unit": "kg", "notes": "Unroasted premium Arabica beans", "materialType": "raw" },
+  "robusta-green-beans": { "name": "Robusta Green Coffee Beans", "sku": "RAW-002", "category": "Coffee Ingredients", "price": 310, "stock": 22, "threshold": 10, "unit": "kg", "notes": "Unroasted Robusta beans for house blends", "materialType": "raw" },
+  "brown-sugar": { "name": "Organic Brown Sugar", "sku": "RAW-003", "category": "Sweeteners", "price": 95, "stock": 8, "threshold": 10, "unit": "kg", "notes": "Locally sourced brown sugar", "materialType": "raw" },
+  "white-sugar": { "name": "Refined White Sugar", "sku": "RAW-004", "category": "Sweeteners", "price": 78, "stock": 16, "threshold": 8, "unit": "kg", "notes": "Food-grade refined sugar", "materialType": "raw" },
+  "oat-milk": { "name": "Barista Oat Milk", "sku": "RAW-005", "category": "Milk", "price": 155, "stock": 6, "threshold": 8, "unit": "cartons", "notes": "Shelf-stable 1 liter carton", "materialType": "raw" },
+  "fresh-milk": { "name": "Fresh Whole Milk", "sku": "RAW-006", "category": "Milk", "price": 110, "stock": 18, "threshold": 10, "unit": "liters", "notes": "Pasteurized whole milk", "materialType": "raw" },
+  "dark-chocolate-powder": { "name": "Dark Chocolate Powder", "sku": "RAW-007", "category": "Flavorings", "price": 410, "stock": 4, "threshold": 7, "unit": "kg", "notes": "Premium cocoa blend", "materialType": "raw" },
+  "vanilla-syrup": { "name": "Vanilla Syrup", "sku": "RAW-008", "category": "Flavorings", "price": 320, "stock": 0, "threshold": 5, "unit": "bottles", "notes": "750 ml bottle", "materialType": "raw" },
+  "caramel-syrup": { "name": "Caramel Syrup", "sku": "RAW-009", "category": "Flavorings", "price": 320, "stock": 11, "threshold": 5, "unit": "bottles", "notes": "750 ml bottle", "materialType": "raw" },
+  "cookie-flour": { "name": "All-Purpose Flour", "sku": "RAW-010", "category": "Baking", "price": 72, "stock": 14, "threshold": 6, "unit": "kg", "notes": "Baking flour for cookies and bars", "materialType": "raw" }
+}

@@ -41,4 +41,3 @@ jobs:
         run: node notifications/check-stock-alerts.js
         env:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          DAILY_STOCK_REPORT: "true"

@@ -1,82 +1,12 @@
 {
-  "arabica-beans-1kg": {
-    "name": "Premium Arabica Coffee Beans",
-    "sku": "ES-COF-001",
-    "category": "Beverages",
-    "price": 680,
-    "stock": 24,
-    "threshold": 8,
-    "unit": "bags",
-    "notes": "Whole roasted beans, 1 kg per bag"
-  },
-  "brown-sugar-1kg": {
-    "name": "Organic Brown Sugar",
-    "sku": "ES-SUG-002",
-    "category": "Ingredients",
-    "price": 95,
-    "stock": 6,
-    "threshold": 10,
-    "unit": "packs",
-    "notes": "Locally sourced, 1 kg pack"
-  },
-  "paper-cups-12oz": {
-    "name": "Paper Cups 12 oz",
-    "sku": "ES-PKG-003",
-    "category": "Packaging",
-    "price": 185,
-    "stock": 42,
-    "threshold": 15,
-    "unit": "sleeves",
-    "notes": "50 compostable cups per sleeve"
-  },
-  "vanilla-syrup": {
-    "name": "Vanilla Syrup",
-    "sku": "ES-SYR-004",
-    "category": "Beverages",
-    "price": 320,
-    "stock": 0,
-    "threshold": 5,
-    "unit": "bottles",
-    "notes": "750 ml bottle"
-  },
-  "oat-milk-1l": {
-    "name": "Barista Oat Milk",
-    "sku": "ES-MLK-005",
-    "category": "Dairy Alternatives",
-    "price": 155,
-    "stock": 11,
-    "threshold": 6,
-    "unit": "cartons",
-    "notes": "Shelf-stable 1 L carton"
-  },
-  "takeaway-box-large": {
-    "name": "Large Takeaway Box",
-    "sku": "ES-PKG-006",
-    "category": "Packaging",
-    "price": 240,
-    "stock": 18,
-    "threshold": 10,
-    "unit": "packs",
-    "notes": "25 kraft food boxes per pack"
-  },
-  "chocolate-powder": {
-    "name": "Dark Chocolate Powder",
-    "sku": "ES-CHO-007",
-    "category": "Ingredients",
-    "price": 410,
-    "stock": 4,
-    "threshold": 7,
-    "unit": "bags",
-    "notes": "Premium cocoa blend, 1 kg bag"
-  },
-  "cleaning-sanitizer": {
-    "name": "Food-Safe Surface Sanitizer",
-    "sku": "ES-CLN-008",
-    "category": "Cleaning",
-    "price": 275,
-    "stock": 9,
-    "threshold": 4,
-    "unit": "bottles",
-    "notes": "Ready-to-use 1 L spray bottle"
-  }
+  "premium-arabica-beans": { "name": "Premium Arabica Coffee Beans", "sku": "PRD-001", "category": "Coffee", "price": 680, "stock": 24, "threshold": 8, "unit": "bags", "notes": "Whole roasted beans, 1 kg per bag" },
+  "house-blend-beans": { "name": "House Blend Coffee Beans", "sku": "PRD-002", "category": "Coffee", "price": 590, "stock": 18, "threshold": 8, "unit": "bags", "notes": "Medium roast house blend, 1 kg per bag" },
+  "cold-brew-concentrate": { "name": "Cold Brew Concentrate", "sku": "PRD-003", "category": "Beverages", "price": 250, "stock": 9, "threshold": 5, "unit": "bottles", "notes": "Ready-to-dilute concentrate, 1 liter" },
+  "classic-latte-bottle": { "name": "Classic Latte Bottle", "sku": "PRD-004", "category": "Beverages", "price": 145, "stock": 4, "threshold": 6, "unit": "bottles", "notes": "Chilled ready-to-drink latte, 350 ml" },
+  "mocha-latte-bottle": { "name": "Mocha Latte Bottle", "sku": "PRD-005", "category": "Beverages", "price": 155, "stock": 12, "threshold": 6, "unit": "bottles", "notes": "Chilled chocolate latte, 350 ml" },
+  "vanilla-latte-bottle": { "name": "Vanilla Latte Bottle", "sku": "PRD-006", "category": "Beverages", "price": 155, "stock": 0, "threshold": 6, "unit": "bottles", "notes": "Chilled vanilla latte, 350 ml" },
+  "drip-coffee-box": { "name": "Drip Coffee Gift Box", "sku": "PRD-007", "category": "Gift Sets", "price": 420, "stock": 15, "threshold": 5, "unit": "boxes", "notes": "Ten single-serve drip coffee packs" },
+  "coffee-starter-kit": { "name": "Coffee Starter Kit", "sku": "PRD-008", "category": "Gift Sets", "price": 950, "stock": 3, "threshold": 4, "unit": "sets", "notes": "Beans, dripper, filters, and measuring scoop" },
+  "dark-chocolate-cookies": { "name": "Dark Chocolate Cookies", "sku": "PRD-009", "category": "Snacks", "price": 180, "stock": 20, "threshold": 7, "unit": "packs", "notes": "Six cookies per resealable pack" },
+  "coffee-caramel-bars": { "name": "Coffee Caramel Bars", "sku": "PRD-010", "category": "Snacks", "price": 210, "stock": 7, "threshold": 7, "unit": "boxes", "notes": "Eight individually wrapped bars" }
 }
