@@ -8,5 +8,10 @@
   "dark-chocolate-powder": { "name": "Dark Chocolate Powder", "sku": "RAW-007", "category": "Flavorings", "price": 410, "stock": 4, "threshold": 7, "unit": "kg", "notes": "Premium cocoa blend", "materialType": "raw" },
   "vanilla-syrup": { "name": "Vanilla Syrup", "sku": "RAW-008", "category": "Flavorings", "price": 320, "stock": 0, "threshold": 5, "unit": "bottles", "notes": "750 ml bottle", "materialType": "raw" },
   "caramel-syrup": { "name": "Caramel Syrup", "sku": "RAW-009", "category": "Flavorings", "price": 320, "stock": 11, "threshold": 5, "unit": "bottles", "notes": "750 ml bottle", "materialType": "raw" },
-  "cookie-flour": { "name": "All-Purpose Flour", "sku": "RAW-010", "category": "Baking", "price": 72, "stock": 14, "threshold": 6, "unit": "kg", "notes": "Baking flour for cookies and bars", "materialType": "raw" }
+  "cookie-flour": { "name": "All-Purpose Flour", "sku": "RAW-010", "category": "Baking", "price": 72, "stock": 14, "threshold": 6, "unit": "kg", "notes": "Baking flour for cookies and bars", "materialType": "raw" },
+  "hazelnut-syrup": { "name": "Hazelnut Syrup", "sku": "RAW-011", "category": "Flavorings", "price": 340, "stock": 9, "threshold": 5, "unit": "bottles", "notes": "750 ml bottle", "materialType": "raw" },
+  "sea-salt": { "name": "Fine Sea Salt", "sku": "RAW-012", "category": "Baking", "price": 65, "stock": 3, "threshold": 4, "unit": "kg", "notes": "Fine food-grade sea salt", "materialType": "raw" },
+  "rolled-oats": { "name": "Rolled Oats", "sku": "RAW-013", "category": "Baking", "price": 125, "stock": 12, "threshold": 6, "unit": "kg", "notes": "Whole-grain oats for snack bars", "materialType": "raw" },
+  "butter-blocks": { "name": "Unsalted Butter", "sku": "RAW-014", "category": "Baking", "price": 240, "stock": 7, "threshold": 7, "unit": "blocks", "notes": "One kilogram block for baking", "materialType": "raw" },
+  "cinnamon-powder": { "name": "Cinnamon Powder", "sku": "RAW-015", "category": "Flavorings", "price": 180, "stock": 0, "threshold": 3, "unit": "packs", "notes": "500 gram food-grade cinnamon powder", "materialType": "raw" }
 }

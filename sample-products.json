@@ -8,5 +8,10 @@
   "drip-coffee-box": { "name": "Drip Coffee Gift Box", "sku": "PRD-007", "category": "Gift Sets", "price": 420, "stock": 15, "threshold": 5, "unit": "boxes", "notes": "Ten single-serve drip coffee packs" },
   "coffee-starter-kit": { "name": "Coffee Starter Kit", "sku": "PRD-008", "category": "Gift Sets", "price": 950, "stock": 3, "threshold": 4, "unit": "sets", "notes": "Beans, dripper, filters, and measuring scoop" },
   "dark-chocolate-cookies": { "name": "Dark Chocolate Cookies", "sku": "PRD-009", "category": "Snacks", "price": 180, "stock": 20, "threshold": 7, "unit": "packs", "notes": "Six cookies per resealable pack" },
-  "coffee-caramel-bars": { "name": "Coffee Caramel Bars", "sku": "PRD-010", "category": "Snacks", "price": 210, "stock": 7, "threshold": 7, "unit": "boxes", "notes": "Eight individually wrapped bars" }
+  "coffee-caramel-bars": { "name": "Coffee Caramel Bars", "sku": "PRD-010", "category": "Snacks", "price": 210, "stock": 7, "threshold": 7, "unit": "boxes", "notes": "Eight individually wrapped bars" },
+  "hazelnut-latte-bottle": { "name": "Hazelnut Latte Bottle", "sku": "PRD-011", "category": "Beverages", "price": 165, "stock": 14, "threshold": 6, "unit": "bottles", "notes": "Chilled hazelnut latte, 350 ml" },
+  "espresso-shot-bottle": { "name": "Espresso Shot Bottle", "sku": "PRD-012", "category": "Beverages", "price": 120, "stock": 5, "threshold": 5, "unit": "bottles", "notes": "Double espresso concentrate, 100 ml" },
+  "single-origin-beans": { "name": "Single-Origin Coffee Beans", "sku": "PRD-013", "category": "Coffee", "price": 750, "stock": 10, "threshold": 4, "unit": "bags", "notes": "Seasonal single-origin roast, 1 kg per bag" },
+  "coffee-cookie-gift-tin": { "name": "Coffee Cookie Gift Tin", "sku": "PRD-014", "category": "Gift Sets", "price": 480, "stock": 2, "threshold": 4, "unit": "tins", "notes": "Assorted coffee-flavored cookies in a reusable tin" },
+  "cocoa-oat-bars": { "name": "Cocoa Oat Bars", "sku": "PRD-015", "category": "Snacks", "price": 195, "stock": 0, "threshold": 6, "unit": "boxes", "notes": "Six individually wrapped cocoa oat bars" }
 }

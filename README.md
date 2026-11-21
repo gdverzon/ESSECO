@@ -39,7 +39,7 @@ The verified Google account `gd.verzon@gmail.com` is the permanent bootstrap adm
 
 ## Sample inventory data
 
-The repository includes 10 ready-to-import records for each inventory:
+The repository includes 15 ready-to-import records for each inventory:
 
 - `sample-products.json` goes under `inventory/products`.
 - `sample-raw-materials.json` goes under `inventory/materials`.
